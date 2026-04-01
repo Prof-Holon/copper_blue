@@ -792,7 +792,17 @@ u8 DoBattlerEndTurnEffects(void)
                  && gBattleMons[gActiveBattler].hp != 0)
                 {
                     gBattlerTarget = gStatuses3[gActiveBattler] & STATUS3_LEECHSEED_BATTLER; // Notice gBattlerTarget is actually the HP receiver.
-                    gBattleMoveDamage = gBattleMons[gActiveBattler].maxHP / 8;
+                    if (gBattleMons[gActiveBattler].status1 & STATUS1_TOXIC_POISON) // Replicates the Gen 1 bug
+                    {
+                        u8 counter = gBattleStruct ->toxicTurnCounter[gActiveBattler];
+                        if (counter == 0)
+                            counter = 1;
+                        gBattleMoveDamage = (gBattleMons[gActiveBattler].maxHP / 16) * counter;
+                    }
+                    else
+                    {
+                        gBattleMoveDamage = gBattleMons[gActiveBattler].maxHP / 8;
+                    }
                     if (gBattleMoveDamage == 0)
                         gBattleMoveDamage = 1;
                     gBattleScripting.animArg1 = gBattlerTarget;

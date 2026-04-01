@@ -3473,9 +3473,16 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
         speedBattler2 /= 2;
     if (gBattleMons[battler2].status1 & STATUS1_PARALYSIS)
         speedBattler2 /= 4;
+    // ADD: wrapped battlers move last — override speed to 0 after all other modifiers
+    // This is applied before Quick Claw so that Quick Claw can save a wrapped battler
+    if (gBattleMons[battler1].status2 & STATUS2_WRAPPED)
+        speedBattler1 = 0;
+    if (gBattleMons[battler2].status2 & STATUS2_WRAPPED)
+        speedBattler2 = 0;
+    // END ADD
     if (holdEffect == HOLD_EFFECT_QUICK_CLAW && gRandomTurnNumber < (0xFFFF * holdEffectParam) / 100)
         speedBattler2 = UINT_MAX;
-    if (ignoreChosenMoves)
+        if (ignoreChosenMoves)
     {
         moveBattler1 = MOVE_NONE;
         moveBattler2 = MOVE_NONE;

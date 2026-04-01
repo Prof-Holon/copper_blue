@@ -1090,7 +1090,11 @@ static void Cmd_accuracycheck(void)
             calc = (calc * (100 - param)) / 100;
 
         // final calculation
-        if ((Random() % 100 + 1) > calc)
+        u16 rand = Random() & 0xFF;  // 0–255
+        u16 acc = (calc * 255) / 100;
+        if (acc > 255)
+            acc = 255;
+        if ((rand >= acc)
         {
             gMoveResultFlags |= MOVE_RESULT_MISSED;
             if (gBattleTypeFlags & BATTLE_TYPE_DOUBLE
@@ -1171,6 +1175,8 @@ static void Cmd_critcalc(void)
 {
     u8 holdEffect;
     u16 item, critChance;
+    u32 gen3denominator, gen1denominator, effectivedenominator; // ADDED
+    u16 baseSpeed; //added
 
     item = gBattleMons[gBattlerAttacker].item;
 
@@ -1193,10 +1199,24 @@ static void Cmd_critcalc(void)
     if (critChance >= ARRAY_COUNT(sCriticalHitChance))
         critChance = ARRAY_COUNT(sCriticalHitChance) - 1;
 
+// ADDED THIS BLOCK: compute Gen 1 speed-based denominator
+    gen3Denominator = sCriticalHitChance[critChance];
+    baseSpeed = gSpeciesInfo[gBattleMons[gBattlerAttacker].species].baseSpeed;
+    if (baseSpeed == 0)
+        gen1Denominator = gen3Denominator;
+    else
+    {
+        gen1Denominator = (68 * sCriticalHitChance[critChance]) / baseSpeed; // allows it to also scale based on crit stage, anything higher than 80 is better
+        if (gen1Denominator < 2)
+            gen1Denominator = 2;
+    }
+    effectiveDenominator = (gen1Denominator < gen3Denominator) ? gen1Denominator : gen3Denominator;
+    // END ADD
+
     if ((gBattleMons[gBattlerTarget].ability != ABILITY_BATTLE_ARMOR && gBattleMons[gBattlerTarget].ability != ABILITY_SHELL_ARMOR)
      && !(gStatuses3[gBattlerAttacker] & STATUS3_CANT_SCORE_A_CRIT)
      && !(gBattleTypeFlags & BATTLE_TYPE_OLD_MAN_TUTORIAL)
-     && !(Random() % sCriticalHitChance[critChance])
+     && !(Random() % effectiveDenominator)
      && (!(gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE) || BtlCtrl_OakOldMan_TestState2Flag(1))
      && !(gBattleTypeFlags & BATTLE_TYPE_POKEDUDE))
         gCritMultiplier = 2;
@@ -2487,7 +2507,7 @@ void SetMoveEffect(bool8 primary, u8 certain)
                 }
                 else
                 {
-                    gBattleMons[gEffectBattler].status2 |= STATUS2_WRAPPED_TURN((Random() & 3) + 3); // 3-6 turns
+                    gBattleMons[gEffectBattler].status2 |= STATUS2_WRAPPED_TURN((Random() & 2) + 3); // 2-5 turns
 
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 0) = gCurrentMove;
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 1) = gCurrentMove >> 8;
@@ -2506,12 +2526,18 @@ void SetMoveEffect(bool8 primary, u8 certain)
                 }
                 break;
             case MOVE_EFFECT_RECOIL_25: // 25% recoil
-                gBattleMoveDamage = (gHpDealt) / 4;
-                if (gBattleMoveDamage == 0)
-                    gBattleMoveDamage = 1;
-
-                BattleScriptPush(gBattlescriptCurrInstr + 1);
-                gBattlescriptCurrInstr = sMoveEffectBS_Ptrs[gBattleCommunication[MOVE_EFFECT_BYTE]];
+                if (!(gBattleMons[gBattlerTarget].status2 & STATUS2_SUBSTITUTE)) // moved existing interaction under a no-sub check
+                {
+                    gBattleMoveDamage = (gHpDealt) / 4;
+                    if (gBattleMoveDamage == 0)
+                        gBattleMoveDamage = 1;
+                    BattleScriptPush(gBattlescriptCurrInstr + 1);
+                    gBattlescriptCurrInstr = sMoveEffectBS_Ptrs[gBattleCommunication[MOVE_EFFECT_BYTE]];
+                }
+                else // added no recoil on sub
+                {
+                    gBattlescriptCurrInstr++;
+                }
                 break;
             case MOVE_EFFECT_ATK_PLUS_1:
             case MOVE_EFFECT_DEF_PLUS_1:
@@ -2598,6 +2624,7 @@ void SetMoveEffect(bool8 primary, u8 certain)
                 }
                 break;
             case MOVE_EFFECT_RECHARGE:
+                if (gBattleMons[gBattlerTarget].hp !=0) // sets a check to only apply recharge if target has not fainted
                 gBattleMons[gEffectBattler].status2 |= STATUS2_RECHARGE;
                 gDisableStructs[gEffectBattler].rechargeTimer = 2;
                 gLockedMoves[gEffectBattler] = gCurrentMove;
@@ -2709,12 +2736,19 @@ void SetMoveEffect(bool8 primary, u8 certain)
                 gBattlescriptCurrInstr = BattleScript_AtkDefDown;
                 break;
             case MOVE_EFFECT_RECOIL_33: // Double Edge
+                if (!(gBattleMons[gBattlerTarget].status2 & STATUS2_SUBSTITUTE)) // added sub check
+                {
                 gBattleMoveDamage = gHpDealt / 3;
                 if (gBattleMoveDamage == 0)
                     gBattleMoveDamage = 1;
 
                 BattleScriptPush(gBattlescriptCurrInstr + 1);
                 gBattlescriptCurrInstr = sMoveEffectBS_Ptrs[gBattleCommunication[MOVE_EFFECT_BYTE]];
+                }
+                else // if there is a sub, no damage
+                {
+                    gBattlescriptCurrInstr++;
+                }
                 break;
             case MOVE_EFFECT_THRASH:
                 if (gBattleMons[gEffectBattler].status2 & STATUS2_LOCK_CONFUSE)
@@ -2771,7 +2805,21 @@ void SetMoveEffect(bool8 primary, u8 certain)
     }
 }
 
-static void Cmd_seteffectwithchance(void)
+static void Cmd_seteffectwithchance(void) //should prevent same-type status effects
+switch (gBattleCommunication[MOVE_EFFECT_BYTE])
+{
+case MOVE_EFFECT_SLEEP:
+case MOVE_EFFECT_POISON:
+case MOVE_EFFECT_BURN:
+case MOVE_EFFECT_FREEZE:
+case MOVE_EFFECT_PARALYSIS:
+case MOVE_EFFECT_TOXIC:
+if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
+    {
+        gBattlescriptCurrInstr++;
+        return;
+    }
+}
 {
     u32 percentChance;
 
@@ -2804,12 +2852,40 @@ static void Cmd_seteffectwithchance(void)
     gBattleScripting.multihitMoveEffect = 0;
 }
 
-static void Cmd_seteffectprimary(void)
+static void Cmd_seteffectprimary(void) //should prevent same-type status effects
+switch (gBattleCommunication[MOVE_EFFECT_BYTE])
+{
+case MOVE_EFFECT_SLEEP:
+case MOVE_EFFECT_POISON:
+case MOVE_EFFECT_BURN:
+case MOVE_EFFECT_FREEZE:
+case MOVE_EFFECT_PARALYSIS:
+case MOVE_EFFECT_TOXIC:
+if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
+    {
+        gBattlescriptCurrInstr++;
+        return;
+    }
+}
 {
     SetMoveEffect(TRUE, 0);
 }
 
-static void Cmd_seteffectsecondary(void)
+static void Cmd_seteffectsecondary(void) //should prevent same-type status effects
+switch (gBattleCommunication[MOVE_EFFECT_BYTE])
+{
+case MOVE_EFFECT_SLEEP:
+case MOVE_EFFECT_POISON:
+case MOVE_EFFECT_BURN:
+case MOVE_EFFECT_FREEZE:
+case MOVE_EFFECT_PARALYSIS:
+case MOVE_EFFECT_TOXIC:
+if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
+    {
+        gBattlescriptCurrInstr++;
+        return;
+    }
+}
 {
     SetMoveEffect(FALSE, 0);
 }
