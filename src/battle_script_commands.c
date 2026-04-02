@@ -962,7 +962,21 @@ static bool8 AccuracyCalcHelper(u16 move)
         JumpIfMoveFailed(7, move);
         return TRUE;
     }
-
+    // ADD: Cacophony — sound moves always hit
+    if (gBattleMons[gBattlerAttacker].ability == ABILITY_CACOPHONY)
+    {
+        extern const u16 sSoundMovesTable[];   // defined in battle_util.c
+        s32 i;
+        for (i = 0; sSoundMovesTable[i] != 0xFFFF; i++)
+        {
+            if (sSoundMovesTable[i] == move)
+            {
+                JumpIfMoveFailed(7, move);
+                return TRUE;
+            }
+        }
+    }
+    // END ADD
     if (!(gHitMarker & HITMARKER_IGNORE_ON_AIR) && gStatuses3[gBattlerTarget] & STATUS3_ON_AIR)
     {
         gMoveResultFlags |= MOVE_RESULT_MISSED;

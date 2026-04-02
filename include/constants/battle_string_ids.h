@@ -387,8 +387,9 @@
 
 #define STRINGID_PKMNCHANGEDTOBOTHTYPE 386 //add to redefine conversion
 #define STRINGID_PKMNCOPIEDSECONDARYTYPE 387 //add to redefine conversion2
+#define STRINGID_PKMNSXSUMMONEDHAIL 388 //ADD snow warning
 
-#define BATTLESTRINGS_COUNT     388
+#define BATTLESTRINGS_COUNT     389
 
 // This is the string id that gBattleStringsTable starts with.
 // String ids before this (e.g. STRINGID_INTROMSG) are not in the table,

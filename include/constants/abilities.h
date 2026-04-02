@@ -80,6 +80,8 @@
 #define ABILITY_CACOPHONY 76
 #define ABILITY_AIR_LOCK 77
 
-#define ABILITIES_COUNT 78
+#define ability_snow_warning 78
+
+#define ABILITIES_COUNT 79
 
 #endif  // GUARD_CONSTANTS_ABILITIES_H

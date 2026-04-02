@@ -352,6 +352,7 @@ static const u8 sText_SunlightFaded[] = _("The sunlight faded.");
 static const u8 sText_StartedHail[] = _("It started to hail!");
 static const u8 sText_HailContinues[] = _("Hail continues to fall.");
 static const u8 sText_HailStopped[] = _("The hail stopped.");
+static const u8 sText_HailSummon[] = _("{B_SCR_ACTIVE_NAME_WITH_PREFIX} summoned a hailstorm!");
 static const u8 sText_FailedToSpitUp[] = _("But it failed to SPIT UP\na thing!");
 static const u8 sText_FailedToSwallow[] = _("But it failed to SWALLOW\na thing!");
 static const u8 sText_WindBecameHeatWave[] = _("The wind turned into a\nHEAT WAVE!");
@@ -837,6 +838,7 @@ const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_ST
     [STRINGID_EMPTYSTRING4 - BATTLESTRINGS_TABLE_START]                  = sText_EmptyString4,
     [STRINGID_ABOOSTED - BATTLESTRINGS_TABLE_START]                      = sText_ABoosted,
     [STRINGID_PKMNSXINTENSIFIEDSUN - BATTLESTRINGS_TABLE_START]          = sText_PkmnsXIntensifiedSun,
+    [STRINGID_PKMNSXSUMMONEDHAIL - BATTLESTRINGS_TABLE_START]            = sText_HailSummon,
     [STRINGID_PKMNMAKESGROUNDMISS - BATTLESTRINGS_TABLE_START]           = sText_PkmnMakesGroundMiss,
     [STRINGID_YOUTHROWABALLNOWRIGHT - BATTLESTRINGS_TABLE_START]         = sText_YouThrowABallNowRight,
     [STRINGID_PKMNSXTOOKATTACK - BATTLESTRINGS_TABLE_START]              = sText_PkmnsXTookAttack,
