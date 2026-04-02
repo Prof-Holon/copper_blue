@@ -385,7 +385,10 @@
 #define STRINGID_TRAINER1MON2COMEBACK 384
 #define STRINGID_TRAINER1MON1AND2COMEBACK 385
 
-#define BATTLESTRINGS_COUNT     386
+#define STRINGID_PKMNCHANGEDTOBOTHTYPE 386 //add to redefine conversion
+#define STRINGID_PKMNCOPIEDSECONDARYTYPE 387 //add to redefine conversion2
+
+#define BATTLESTRINGS_COUNT     388
 
 // This is the string id that gBattleStringsTable starts with.
 // String ids before this (e.g. STRINGID_INTROMSG) are not in the table,

@@ -7077,40 +7077,33 @@ static void Cmd_forcerandomswitch(void)
     }
 }
 
-// Randomly changes user's type to one of its moves' type
+// Changes user's type to foe's type
 static void Cmd_tryconversiontypechange(void)
 {
-    u8 validMoves = 0;
-    u8 moveChecked;
-    u8 moveType;
+    u8 targetType1 = gBattleMons[gBattlerTarget].type1;
+    u8 targetType2 = gBattleMons[gBattlerTarget].type2;
 
-    while (validMoves < MAX_MON_MOVES)
+    // Fail if the user already matches both of the target's types
+    if (gBattleMons[gBattlerAttacker].type1 == targetType1
+     && gBattleMons[gBattlerAttacker].type2 == targetType2)
     {
-        if (gBattleMons[gBattlerAttacker].moves[validMoves] == MOVE_NONE)
-            break;
-
-        validMoves++;
+        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
+        return;
     }
 
-    for (moveChecked = 0; moveChecked < validMoves; moveChecked++)
-    {
-        moveType = gBattleMoves[gBattleMons[gBattlerAttacker].moves[moveChecked]].type;
+    // Copy both of the target's types onto the user
+    gBattleMons[gBattlerAttacker].type1 = targetType1;
+    gBattleMons[gBattlerAttacker].type2 = targetType2;
 
-        if (moveType == TYPE_MYSTERY)
-        {
-            if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_GHOST))
-                moveType = TYPE_GHOST;
-            if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_FIGHTING))
-                moveType = TYPE_FIGHTING;
-            else
-                moveType = TYPE_NORMAL;
-        }
-        if (moveType != gBattleMons[gBattlerAttacker].type1
-            && moveType != gBattleMons[gBattlerAttacker].type2)
-        {
-            break;
-        }
-    }
+    // Prepare the type name for the battle message — use type1 as the primary display type
+    PREPARE_TYPE_BUFFER(gBattleTextBuff1, targetType1);  // unchanged — buff1 = type1
+    if (targetType2 != targetType1)
+        PREPARE_TYPE_BUFFER(gBattleTextBuff2, targetType2);
+    else
+        gBattleTextBuff2[0] = B_BUFF_EOS;  // empty second buffer
+
+    gBattlescriptCurrInstr += 5;
+}
 
     if (moveChecked == validMoves)
     {
@@ -7779,64 +7772,24 @@ static void Cmd_painsplitdmgcalc(void)
 }
 
 // Conversion 2
-static void Cmd_settypetorandomresistance(void)
+static void Cmd_settypetorandomresistance(void) // updated to change secondary type only
 {
-    if (gLastLandedMoves[gBattlerAttacker] == MOVE_NONE
-     || gLastLandedMoves[gBattlerAttacker] == MOVE_UNAVAILABLE)
+    u8 targetType2 = gBattleMons[gBattlerTarget].type2;
+
+    // Fail if user already has the target's secondary type
+    if (gBattleMons[gBattlerAttacker].type1 == targetType2
+     || gBattleMons[gBattlerAttacker].type2 == targetType2)
     {
         gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
+        return;
     }
-    else if (IsTwoTurnsMove(gLastLandedMoves[gBattlerAttacker])
-            && gBattleMons[gLastHitBy[gBattlerAttacker]].status2 & STATUS2_MULTIPLETURNS)
-    {
-        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
-    }
-    else
-    {
-        s32 i, j, rands;
 
-        for (rands = 0; rands < 1000; rands++)
-        {
-            while (((i = Random() % 128) > sizeof(gTypeEffectiveness) / 3));
+    // Copy only the target's secondary type onto the user's type2 slot
+    gBattleMons[gBattlerAttacker].type2 = targetType2;
 
-            i *= 3;
+    PREPARE_TYPE_BUFFER(gBattleTextBuff1, targetType2);
 
-            if (TYPE_EFFECT_ATK_TYPE(i) == gLastHitByType[gBattlerAttacker]
-                && TYPE_EFFECT_MULTIPLIER(i) <= TYPE_MUL_NOT_EFFECTIVE
-                && !IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(i)))
-            {
-                SET_BATTLER_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(i));
-                PREPARE_TYPE_BUFFER(gBattleTextBuff1, TYPE_EFFECT_DEF_TYPE(i));
-
-                gBattlescriptCurrInstr += 5;
-                return;
-            }
-        }
-
-        for (j = 0, rands = 0; rands < sizeof(gTypeEffectiveness); j += 3, rands += 3)
-        {
-            switch (TYPE_EFFECT_ATK_TYPE(j))
-            {
-            case TYPE_ENDTABLE:
-            case TYPE_FORESIGHT:
-                break;
-            default:
-                if (TYPE_EFFECT_ATK_TYPE(j) == gLastHitByType[gBattlerAttacker]
-                 && TYPE_EFFECT_MULTIPLIER(j) <= 5
-                 && !IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(i)))
-                {
-                    SET_BATTLER_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(rands));
-                    PREPARE_TYPE_BUFFER(gBattleTextBuff1, TYPE_EFFECT_DEF_TYPE(rands))
-
-                    gBattlescriptCurrInstr += 5;
-                    return;
-                }
-                break;
-            }
-        }
-
-        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
-    }
+    gBattlescriptCurrInstr += 5;
 }
 
 static void Cmd_setalwayshitflag(void)
@@ -8608,6 +8561,12 @@ static void Cmd_hiddenpowercalc(void)
     gBattleStruct->dynamicMoveType = ((NUMBER_OF_MON_TYPES - 3) * typeBits) / 63 + 1;
     if (gBattleStruct->dynamicMoveType >= TYPE_MYSTERY)
         gBattleStruct->dynamicMoveType++;
+    // ADD: remap Steel and Dark to Rock and Ghost respectively
+    if (gBattleStruct->dynamicMoveType == TYPE_STEEL)
+        gBattleStruct->dynamicMoveType = TYPE_ROCK;
+    if (gBattleStruct->dynamicMoveType == TYPE_DARK)
+        gBattleStruct->dynamicMoveType = TYPE_GHOST;
+    // END ADD
     gBattleStruct->dynamicMoveType |= F_DYNAMIC_TYPE_1 | F_DYNAMIC_TYPE_2;
 
     gBattlescriptCurrInstr++;

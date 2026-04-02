@@ -662,7 +662,7 @@ BattleScript_EffectConversion::
 	tryconversiontypechange BattleScript_ButItFailed
 	attackanimation
 	waitanimation
-	printstring STRINGID_PKMNCHANGEDTYPE
+	printstring STRINGID_PKMNCHANGEDTOBOTHTYPE
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
@@ -1276,7 +1276,7 @@ BattleScript_EffectConversion2::
 	settypetorandomresistance BattleScript_ButItFailed
 	attackanimation
 	waitanimation
-	printstring STRINGID_PKMNCHANGEDTYPE
+	printstring STRINGID_PKMNCOPIEDSECONDARYTYPE
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
