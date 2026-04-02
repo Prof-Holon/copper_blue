@@ -2374,6 +2374,7 @@ void SwitchInClearSetData(void)
             gBattleMons[i].status2 &= ~STATUS2_INFATUATED_WITH(gActiveBattler);
         if ((gBattleMons[i].status2 & STATUS2_WRAPPED) && *(gBattleStruct->wrappedBy + i) == gActiveBattler)
             gBattleMons[i].status2 &= ~STATUS2_WRAPPED;
+            gBattleMons[gActiveBattler].status2 &= ~STATUS2_MULTIPLETURNS; // ADD — trapper leaves, end lock-in
     }
 
     gActionSelectionCursor[gActiveBattler] = 0;
@@ -2449,6 +2450,7 @@ void FaintClearSetData(void)
             gBattleMons[i].status2 &= ~STATUS2_INFATUATED_WITH(gActiveBattler);
         if ((gBattleMons[i].status2 & STATUS2_WRAPPED) && *(gBattleStruct->wrappedBy + i) == gActiveBattler)
             gBattleMons[i].status2 &= ~STATUS2_WRAPPED;
+            gBattleMons[gActiveBattler].status2 &= ~STATUS2_MULTIPLETURNS; // ADD
     }
 
     gActionSelectionCursor[gActiveBattler] = 0;

@@ -899,6 +899,11 @@ u8 DoBattlerEndTurnEffects(void)
                     }
                     else  // broke free
                     {
+                        // ADD: release the trapper from their lock-in when the trap expires naturally
+                        u8 trapper = *(gBattleStruct->wrappedBy + gActiveBattler);
+                        gBattleMons[trapper].status2 &= ~STATUS2_MULTIPLETURNS;
+                        gLockedMoves[trapper] = MOVE_NONE;
+                        // END ADD
                         gBattleTextBuff1[0] = B_BUFF_PLACEHOLDER_BEGIN;
                         gBattleTextBuff1[1] = B_BUFF_MOVE;
                         gBattleTextBuff1[2] = *(gBattleStruct->wrappedMove + gActiveBattler * 2 + 0);

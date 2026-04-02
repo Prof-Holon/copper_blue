@@ -833,6 +833,7 @@ BattleScript_EffectTrap::
 	setbyte sDMG_MULTIPLIER, 2
 BattleScript_DoWrapEffect::
 	setmoveeffect MOVE_EFFECT_WRAP
+	setmoveeffect MOVE_EFFECT_FLINCH
 	goto BattleScript_EffectHit
 
 BattleScript_EffectDoubleHit::

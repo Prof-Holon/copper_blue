@@ -2512,7 +2512,7 @@ void SetMoveEffect(bool8 primary, u8 certain)
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 0) = gCurrentMove;
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 1) = gCurrentMove >> 8;
                     *(gBattleStruct->wrappedBy + gEffectBattler) = gBattlerAttacker;
-
+                    gBattleMons[gBattlerAttacker].status2 |= STATUS2_MULTIPLETURNS; // ADD: lock the attacker into this move for the trap duration
                     BattleScriptPush(gBattlescriptCurrInstr + 1);
                     gBattlescriptCurrInstr = sMoveEffectBS_Ptrs[gBattleCommunication[MOVE_EFFECT_BYTE]];
 
@@ -6926,7 +6926,9 @@ static void Cmd_confuseifrepeatingattackends(void)
 {
     if (!(gBattleMons[gBattlerAttacker].status2 & STATUS2_LOCK_CONFUSE))
         gBattleCommunication[MOVE_EFFECT_BYTE] = (MOVE_EFFECT_THRASH | MOVE_EFFECT_AFFECTS_USER);
-
+    // Guard: don't confuse if the multipleturns was caused by a trap move
+    if (gBattleMons[gBattlerAttacker].status2 & STATUS2_WRAPPED)
+        return; // trap still active, don't end multipleturns yet
     gBattlescriptCurrInstr++;
 }
 
@@ -7098,6 +7100,8 @@ static void Cmd_tryconversiontypechange(void)
         {
             if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_GHOST))
                 moveType = TYPE_GHOST;
+            if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_FIGHTING))
+                moveType = TYPE_FIGHTING;
             else
                 moveType = TYPE_NORMAL;
         }
@@ -7124,6 +7128,8 @@ static void Cmd_tryconversiontypechange(void)
             {
                 if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_GHOST))
                     moveType = TYPE_GHOST;
+                if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_FIGHTING))
+                    moveType = TYPE_FIGHTING;
                 else
                     moveType = TYPE_NORMAL;
             }
@@ -7534,6 +7540,7 @@ static void Cmd_setsubstitute(void)
 
         gBattleMons[gBattlerAttacker].status2 |= STATUS2_SUBSTITUTE;
         gBattleMons[gBattlerAttacker].status2 &= ~STATUS2_WRAPPED;
+        gBattleMons[*(gBattleStruct->wrappedBy + gBattlerAttacker)].status2 &= ~STATUS2_MULTIPLETURNS; // ADD — free the trapper
         gDisableStructs[gBattlerAttacker].substituteHP = gBattleMoveDamage;
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_SET_SUBSTITUTE;
         gHitMarker |= HITMARKER_IGNORE_SUBSTITUTE;
@@ -8514,6 +8521,7 @@ static void Cmd_rapidspinfree(void)
     {
         gBattleScripting.battler = gBattlerTarget;
         gBattleMons[gBattlerAttacker].status2 &= ~STATUS2_WRAPPED;
+        gBattleMons[*(gBattleStruct->wrappedBy + gBattlerAttacker)].status2 &= ~STATUS2_MULTIPLETURNS; // ADD
         gBattlerTarget = *(gBattleStruct->wrappedBy + gBattlerAttacker);
 
         gBattleTextBuff1[0] = B_BUFF_PLACEHOLDER_BEGIN;
