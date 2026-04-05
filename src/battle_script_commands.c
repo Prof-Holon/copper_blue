@@ -2822,13 +2822,13 @@ void SetMoveEffect(bool8 primary, u8 certain)
 static void Cmd_seteffectwithchance(void) //should prevent same-type status effects
 switch (gBattleCommunication[MOVE_EFFECT_BYTE])
 {
-case MOVE_EFFECT_SLEEP:
-case MOVE_EFFECT_POISON:
-case MOVE_EFFECT_BURN:
-case MOVE_EFFECT_FREEZE:
-case MOVE_EFFECT_PARALYSIS:
-case MOVE_EFFECT_TOXIC:
-if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
+    case MOVE_EFFECT_SLEEP:
+    case MOVE_EFFECT_POISON:
+    case MOVE_EFFECT_BURN:
+    case MOVE_EFFECT_FREEZE:
+    case MOVE_EFFECT_PARALYSIS:
+    case MOVE_EFFECT_TOXIC:
+    if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
     {
         gBattlescriptCurrInstr++;
         return;
@@ -2866,21 +2866,7 @@ if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
     gBattleScripting.multihitMoveEffect = 0;
 }
 
-static void Cmd_seteffectprimary(void) //should prevent same-type status effects
-switch (gBattleCommunication[MOVE_EFFECT_BYTE])
-{
-case MOVE_EFFECT_SLEEP:
-case MOVE_EFFECT_POISON:
-case MOVE_EFFECT_BURN:
-case MOVE_EFFECT_FREEZE:
-case MOVE_EFFECT_PARALYSIS:
-case MOVE_EFFECT_TOXIC:
-if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
-    {
-        gBattlescriptCurrInstr++;
-        return;
-    }
-}
+static void Cmd_seteffectprimary(void) 
 {
     SetMoveEffect(TRUE, 0);
 }
