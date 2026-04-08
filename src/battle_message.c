@@ -120,6 +120,8 @@ static const u8 sText_PkmnInLove[] = _("{B_ATK_NAME_WITH_PREFIX} is in love\nwit
 static const u8 sText_PkmnImmobilizedByLove[] = _("{B_ATK_NAME_WITH_PREFIX} is\nimmobilized by love!");
 static const u8 sText_PkmnBlownAway[] = _("{B_DEF_NAME_WITH_PREFIX} was\nblown away!");
 static const u8 sText_PkmnChangedType[] = _("{B_ATK_NAME_WITH_PREFIX} transformed\ninto the {B_BUFF1} type!");
+static const u8 sText_PkmnChangedToBothType[] = _("{B_ATK_NAME_WITH_PREFIX} transformed\ninto the {B_BUFF1}/{B_BUFF2} type!"); //add conversion
+static const u8 sText_PkmnCopiedSecondaryType[] = _("{B_ATK_NAME_WITH_PREFIX} copied {B_DEF_NAME_WITH_PREFIX}'s {B_BUFF1} type!"); //add conversion2
 static const u8 sText_PkmnFlinched[] = _("{B_ATK_NAME_WITH_PREFIX} flinched!");
 static const u8 sText_PkmnRegainedHealth[] = _("{B_DEF_NAME_WITH_PREFIX} regained\nhealth!");
 static const u8 sText_PkmnHPFull[] = _("{B_DEF_NAME_WITH_PREFIX}'s\nHP is full!");
@@ -350,6 +352,7 @@ static const u8 sText_SunlightFaded[] = _("The sunlight faded.");
 static const u8 sText_StartedHail[] = _("It started to hail!");
 static const u8 sText_HailContinues[] = _("Hail continues to fall.");
 static const u8 sText_HailStopped[] = _("The hail stopped.");
+static const u8 sText_HailSummon[] = _("{B_SCR_ACTIVE_NAME_WITH_PREFIX} summoned a hailstorm!");
 static const u8 sText_FailedToSpitUp[] = _("But it failed to SPIT UP\na thing!");
 static const u8 sText_FailedToSwallow[] = _("But it failed to SWALLOW\na thing!");
 static const u8 sText_WindBecameHeatWave[] = _("The wind turned into a\nHEAT WAVE!");
@@ -424,6 +427,20 @@ static const u8 sText_ExclamationMark2[] = _("!");
 static const u8 sText_ExclamationMark3[] = _("!");
 static const u8 sText_ExclamationMark4[] = _("!");
 static const u8 sText_ExclamationMark5[] = _("!");
+
+static const u8 sText_Overgrow_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Overgrow\nboosted its Grass moves!");
+static const u8 sText_Blaze_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Blaze\nboosted its Fire moves!");
+static const u8 sText_Torrent_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Torrent\nboosted its Water moves!");
+static const u8 sText_Swarm_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Swarm\nboosted its Bug moves!");
+static const u8 sText_Early_Bird_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Early Bird\nboosted its Flying moves!");
+
+const u16 gLowHpAbilityBoostStringIds[] = {
+    STRINGID_OVERGROWBOOSTED,            // 0
+    STRINGID_BLAZEBOOSTED,               // 1
+    STRINGID_TORRENTBOOSTED,             // 2
+    STRINGID_SWARMBOOSTED,               // 3
+    STRINGID_EARLYBIRDBOOSTED, // 4
+};
 
 static const u8 sText_HP2[] = _("HP");
 static const u8 sText_Attack2[] = _("ATTACK");
@@ -835,6 +852,7 @@ const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_ST
     [STRINGID_EMPTYSTRING4 - BATTLESTRINGS_TABLE_START]                  = sText_EmptyString4,
     [STRINGID_ABOOSTED - BATTLESTRINGS_TABLE_START]                      = sText_ABoosted,
     [STRINGID_PKMNSXINTENSIFIEDSUN - BATTLESTRINGS_TABLE_START]          = sText_PkmnsXIntensifiedSun,
+    [STRINGID_PKMNSXSUMMONEDHAIL - BATTLESTRINGS_TABLE_START]            = sText_HailSummon,
     [STRINGID_PKMNMAKESGROUNDMISS - BATTLESTRINGS_TABLE_START]           = sText_PkmnMakesGroundMiss,
     [STRINGID_YOUTHROWABALLNOWRIGHT - BATTLESTRINGS_TABLE_START]         = sText_YouThrowABallNowRight,
     [STRINGID_PKMNSXTOOKATTACK - BATTLESTRINGS_TABLE_START]              = sText_PkmnsXTookAttack,

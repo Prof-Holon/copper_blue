@@ -962,7 +962,21 @@ static bool8 AccuracyCalcHelper(u16 move)
         JumpIfMoveFailed(7, move);
         return TRUE;
     }
-
+    // ADD: Cacophony — sound moves always hit
+    if (gBattleMons[gBattlerAttacker].ability == ABILITY_CACOPHONY)
+    {
+        extern const u16 sSoundMovesTable[];   // defined in battle_util.c
+        s32 i;
+        for (i = 0; sSoundMovesTable[i] != 0xFFFF; i++)
+        {
+            if (sSoundMovesTable[i] == move)
+            {
+                JumpIfMoveFailed(7, move);
+                return TRUE;
+            }
+        }
+    }
+    // END ADD
     if (!(gHitMarker & HITMARKER_IGNORE_ON_AIR) && gStatuses3[gBattlerTarget] & STATUS3_ON_AIR)
     {
         gMoveResultFlags |= MOVE_RESULT_MISSED;
@@ -1070,8 +1084,10 @@ static void Cmd_accuracycheck(void)
             calc = (calc * 130) / 100; // 1.3 compound eyes boost
         if (WEATHER_HAS_EFFECT && gBattleMons[gBattlerTarget].ability == ABILITY_SAND_VEIL && gBattleWeather & B_WEATHER_SANDSTORM)
             calc = (calc * 80) / 100; // 1.2 sand veil loss
-        if (gBattleMons[gBattlerAttacker].ability == ABILITY_HUSTLE && IS_TYPE_PHYSICAL(type))
-            calc = (calc * 80) / 100; // 1.2 hustle loss
+        if (WEATHER_HAS_EFFECT && gBattleMons[gBattlerTarget].ability == ABILITY_WATER_VEIL && gBattleWeather & B_WEATHER_RAIN)
+            calc = (calc * 80) / 100; // 1.2 water veil loss
+        if (gBattleMons[gBattlerAttacker].ability == ABILITY_HUSTLE && (gBattleMoves[gCurrentMove].flags & FLAG_MAKES_CONTACT))
+            calc = (calc * 80) / 100; // 1.2 hustle loss for contact moves
 
         if (gBattleMons[gBattlerTarget].item == ITEM_ENIGMA_BERRY)
         {
@@ -1756,6 +1772,8 @@ static void Cmd_healthbarupdate(void)
             if (GetBattlerSide(gActiveBattler) == B_SIDE_PLAYER && gBattleMoveDamage > 0)
                 gBattleResults.playerMonWasDamaged = TRUE;
         }
+        if (gBattleMons[gActiveBattler].hp < oldHp && gBattleMons[gActiveBattler].hp != 0) // trigger ability if HP dropped
+            AbilityBattleEffects(ABILITYEFFECT_HP_CHANGE, gActiveBattler, 0, 0, 0);
     }
 
     gBattlescriptCurrInstr += 2;
@@ -2512,7 +2530,7 @@ void SetMoveEffect(bool8 primary, u8 certain)
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 0) = gCurrentMove;
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 1) = gCurrentMove >> 8;
                     *(gBattleStruct->wrappedBy + gEffectBattler) = gBattlerAttacker;
-
+                    gBattleMons[gBattlerAttacker].status2 |= STATUS2_MULTIPLETURNS; // ADD: lock the attacker into this move for the trap duration
                     BattleScriptPush(gBattlescriptCurrInstr + 1);
                     gBattlescriptCurrInstr = sMoveEffectBS_Ptrs[gBattleCommunication[MOVE_EFFECT_BYTE]];
 
@@ -2852,21 +2870,7 @@ switch (gBattleCommunication[MOVE_EFFECT_BYTE])
     gBattleScripting.multihitMoveEffect = 0;
 }
 
-static void Cmd_seteffectprimary(void) //should prevent same-type status effects
-switch (gBattleCommunication[MOVE_EFFECT_BYTE])
-{
-    case MOVE_EFFECT_SLEEP:
-    case MOVE_EFFECT_POISON:
-    case MOVE_EFFECT_BURN:
-    case MOVE_EFFECT_FREEZE:
-    case MOVE_EFFECT_PARALYSIS:
-    case MOVE_EFFECT_TOXIC:
-    if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
-    {
-        gBattlescriptCurrInstr++;
-        return;
-    }
-}
+static void Cmd_seteffectprimary(void) 
 {
     SetMoveEffect(TRUE, 0);
 }
@@ -6881,7 +6885,14 @@ static u8 ChangeStatBuffs(s8 statValue, u8 statId, u8 flags, const u8 *BS_ptr)
         gBattleMons[gActiveBattler].statStages[statId] = MIN_STAT_STAGE;
     if (gBattleMons[gActiveBattler].statStages[statId] > MAX_STAT_STAGE)
         gBattleMons[gActiveBattler].statStages[statId] = MAX_STAT_STAGE;
-
+    // ADD: mirror SpAtk and SpDef stages — merged Special stat
+    if (statId == STAT_SPATK)
+        gBattleMons[gActiveBattler].statStages[STAT_SPDEF] =
+            gBattleMons[gActiveBattler].statStages[STAT_SPATK];
+    if (statId == STAT_SPDEF)
+        gBattleMons[gActiveBattler].statStages[STAT_SPATK] =
+            gBattleMons[gActiveBattler].statStages[STAT_SPDEF];
+    // END ADD
     if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_STAT_WONT_INCREASE && flags & STAT_CHANGE_ALLOW_PTR)
         gMoveResultFlags |= MOVE_RESULT_MISSED;
 
@@ -6896,6 +6907,12 @@ static void Cmd_statbuffchange(void)
     const u8 *jumpPtr = T1_READ_PTR(gBattlescriptCurrInstr + 2);
     if (ChangeStatBuffs(gBattleScripting.statChanger & 0xF0, GET_STAT_BUFF_ID(gBattleScripting.statChanger), gBattlescriptCurrInstr[1], jumpPtr) == STAT_CHANGE_WORKED)
         gBattlescriptCurrInstr += 6;
+    if (statId == STAT_SPATK)
+        gBattleMons[gBattlerTarget].statStages[STAT_SPDEF] =
+        gBattleMons[gBattlerTarget].statStages[STAT_SPATK];
+    if (statId == STAT_SPDEF)
+        gBattleMons[gBattlerTarget].statStages[STAT_SPATK] =
+        gBattleMons[gBattlerTarget].statStages[STAT_SPDEF];
 }
 
 // Haze
@@ -6926,7 +6943,9 @@ static void Cmd_confuseifrepeatingattackends(void)
 {
     if (!(gBattleMons[gBattlerAttacker].status2 & STATUS2_LOCK_CONFUSE))
         gBattleCommunication[MOVE_EFFECT_BYTE] = (MOVE_EFFECT_THRASH | MOVE_EFFECT_AFFECTS_USER);
-
+    // Guard: don't confuse if the multipleturns was caused by a trap move
+    if (gBattleMons[gBattlerAttacker].status2 & STATUS2_WRAPPED)
+        return; // trap still active, don't end multipleturns yet
     gBattlescriptCurrInstr++;
 }
 
@@ -7075,38 +7094,33 @@ static void Cmd_forcerandomswitch(void)
     }
 }
 
-// Randomly changes user's type to one of its moves' type
+// Changes user's type to foe's type
 static void Cmd_tryconversiontypechange(void)
 {
-    u8 validMoves = 0;
-    u8 moveChecked;
-    u8 moveType;
+    u8 targetType1 = gBattleMons[gBattlerTarget].type1;
+    u8 targetType2 = gBattleMons[gBattlerTarget].type2;
 
-    while (validMoves < MAX_MON_MOVES)
+    // Fail if the user already matches both of the target's types
+    if (gBattleMons[gBattlerAttacker].type1 == targetType1
+     && gBattleMons[gBattlerAttacker].type2 == targetType2)
     {
-        if (gBattleMons[gBattlerAttacker].moves[validMoves] == MOVE_NONE)
-            break;
-
-        validMoves++;
+        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
+        return;
     }
 
-    for (moveChecked = 0; moveChecked < validMoves; moveChecked++)
-    {
-        moveType = gBattleMoves[gBattleMons[gBattlerAttacker].moves[moveChecked]].type;
+    // Copy both of the target's types onto the user
+    gBattleMons[gBattlerAttacker].type1 = targetType1;
+    gBattleMons[gBattlerAttacker].type2 = targetType2;
 
-        if (moveType == TYPE_MYSTERY)
-        {
-            if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_GHOST))
-                moveType = TYPE_GHOST;
-            else
-                moveType = TYPE_NORMAL;
-        }
-        if (moveType != gBattleMons[gBattlerAttacker].type1
-            && moveType != gBattleMons[gBattlerAttacker].type2)
-        {
-            break;
-        }
-    }
+    // Prepare the type name for the battle message — use type1 as the primary display type
+    PREPARE_TYPE_BUFFER(gBattleTextBuff1, targetType1);  // unchanged — buff1 = type1
+    if (targetType2 != targetType1)
+        PREPARE_TYPE_BUFFER(gBattleTextBuff2, targetType2);
+    else
+        gBattleTextBuff2[0] = B_BUFF_EOS;  // empty second buffer
+
+    gBattlescriptCurrInstr += 5;
+}
 
     if (moveChecked == validMoves)
     {
@@ -7124,6 +7138,8 @@ static void Cmd_tryconversiontypechange(void)
             {
                 if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_GHOST))
                     moveType = TYPE_GHOST;
+                if (IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_FIGHTING))
+                    moveType = TYPE_FIGHTING;
                 else
                     moveType = TYPE_NORMAL;
             }
@@ -7534,6 +7550,7 @@ static void Cmd_setsubstitute(void)
 
         gBattleMons[gBattlerAttacker].status2 |= STATUS2_SUBSTITUTE;
         gBattleMons[gBattlerAttacker].status2 &= ~STATUS2_WRAPPED;
+        gBattleMons[*(gBattleStruct->wrappedBy + gBattlerAttacker)].status2 &= ~STATUS2_MULTIPLETURNS; // ADD — free the trapper
         gDisableStructs[gBattlerAttacker].substituteHP = gBattleMoveDamage;
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_SET_SUBSTITUTE;
         gHitMarker |= HITMARKER_IGNORE_SUBSTITUTE;
@@ -7772,64 +7789,24 @@ static void Cmd_painsplitdmgcalc(void)
 }
 
 // Conversion 2
-static void Cmd_settypetorandomresistance(void)
+static void Cmd_settypetorandomresistance(void) // updated to change secondary type only
 {
-    if (gLastLandedMoves[gBattlerAttacker] == MOVE_NONE
-     || gLastLandedMoves[gBattlerAttacker] == MOVE_UNAVAILABLE)
+    u8 targetType2 = gBattleMons[gBattlerTarget].type2;
+
+    // Fail if user already has the target's secondary type
+    if (gBattleMons[gBattlerAttacker].type1 == targetType2
+     || gBattleMons[gBattlerAttacker].type2 == targetType2)
     {
         gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
+        return;
     }
-    else if (IsTwoTurnsMove(gLastLandedMoves[gBattlerAttacker])
-            && gBattleMons[gLastHitBy[gBattlerAttacker]].status2 & STATUS2_MULTIPLETURNS)
-    {
-        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
-    }
-    else
-    {
-        s32 i, j, rands;
 
-        for (rands = 0; rands < 1000; rands++)
-        {
-            while (((i = Random() % 128) > sizeof(gTypeEffectiveness) / 3));
+    // Copy only the target's secondary type onto the user's type2 slot
+    gBattleMons[gBattlerAttacker].type2 = targetType2;
 
-            i *= 3;
+    PREPARE_TYPE_BUFFER(gBattleTextBuff1, targetType2);
 
-            if (TYPE_EFFECT_ATK_TYPE(i) == gLastHitByType[gBattlerAttacker]
-                && TYPE_EFFECT_MULTIPLIER(i) <= TYPE_MUL_NOT_EFFECTIVE
-                && !IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(i)))
-            {
-                SET_BATTLER_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(i));
-                PREPARE_TYPE_BUFFER(gBattleTextBuff1, TYPE_EFFECT_DEF_TYPE(i));
-
-                gBattlescriptCurrInstr += 5;
-                return;
-            }
-        }
-
-        for (j = 0, rands = 0; rands < sizeof(gTypeEffectiveness); j += 3, rands += 3)
-        {
-            switch (TYPE_EFFECT_ATK_TYPE(j))
-            {
-            case TYPE_ENDTABLE:
-            case TYPE_FORESIGHT:
-                break;
-            default:
-                if (TYPE_EFFECT_ATK_TYPE(j) == gLastHitByType[gBattlerAttacker]
-                 && TYPE_EFFECT_MULTIPLIER(j) <= 5
-                 && !IS_BATTLER_OF_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(i)))
-                {
-                    SET_BATTLER_TYPE(gBattlerAttacker, TYPE_EFFECT_DEF_TYPE(rands));
-                    PREPARE_TYPE_BUFFER(gBattleTextBuff1, TYPE_EFFECT_DEF_TYPE(rands))
-
-                    gBattlescriptCurrInstr += 5;
-                    return;
-                }
-                break;
-            }
-        }
-
-        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
-    }
+    gBattlescriptCurrInstr += 5;
 }
 
 static void Cmd_setalwayshitflag(void)
@@ -8514,6 +8491,7 @@ static void Cmd_rapidspinfree(void)
     {
         gBattleScripting.battler = gBattlerTarget;
         gBattleMons[gBattlerAttacker].status2 &= ~STATUS2_WRAPPED;
+        gBattleMons[*(gBattleStruct->wrappedBy + gBattlerAttacker)].status2 &= ~STATUS2_MULTIPLETURNS; // ADD
         gBattlerTarget = *(gBattleStruct->wrappedBy + gBattlerAttacker);
 
         gBattleTextBuff1[0] = B_BUFF_PLACEHOLDER_BEGIN;
@@ -8600,6 +8578,12 @@ static void Cmd_hiddenpowercalc(void)
     gBattleStruct->dynamicMoveType = ((NUMBER_OF_MON_TYPES - 3) * typeBits) / 63 + 1;
     if (gBattleStruct->dynamicMoveType >= TYPE_MYSTERY)
         gBattleStruct->dynamicMoveType++;
+    // ADD: remap Steel and Dark to Rock and Ghost respectively
+    if (gBattleStruct->dynamicMoveType == TYPE_STEEL)
+        gBattleStruct->dynamicMoveType = TYPE_ROCK;
+    if (gBattleStruct->dynamicMoveType == TYPE_DARK)
+        gBattleStruct->dynamicMoveType = TYPE_GHOST;
+    // END ADD
     gBattleStruct->dynamicMoveType |= F_DYNAMIC_TYPE_1 | F_DYNAMIC_TYPE_2;
 
     gBattlescriptCurrInstr++;

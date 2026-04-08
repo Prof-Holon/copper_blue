@@ -662,7 +662,7 @@ BattleScript_EffectConversion::
 	tryconversiontypechange BattleScript_ButItFailed
 	attackanimation
 	waitanimation
-	printstring STRINGID_PKMNCHANGEDTYPE
+	printstring STRINGID_PKMNCHANGEDTOBOTHTYPE
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
@@ -833,6 +833,7 @@ BattleScript_EffectTrap::
 	setbyte sDMG_MULTIPLIER, 2
 BattleScript_DoWrapEffect::
 	setmoveeffect MOVE_EFFECT_WRAP
+	setmoveeffect MOVE_EFFECT_FLINCH
 	goto BattleScript_EffectHit
 
 BattleScript_EffectDoubleHit::
@@ -1275,7 +1276,7 @@ BattleScript_EffectConversion2::
 	settypetorandomresistance BattleScript_ButItFailed
 	attackanimation
 	waitanimation
-	printstring STRINGID_PKMNCHANGEDTYPE
+	printstring STRINGID_PKMNCOPIEDSECONDARYTYPE
 	waitmessage B_WAIT_TIME_LONG
 	goto BattleScript_MoveEnd
 
@@ -4018,6 +4019,14 @@ BattleScript_DroughtActivates::
 	call BattleScript_WeatherFormChanges
 	end3
 
+BattleScript_SnowWarningActivates::
+    pause B_WAIT_TIME_SHORT
+    printstring STRINGID_PKMNSXSUMMONEDHAIL
+    waitstate
+    playanimation BS_BATTLER_0, B_ANIM_HAIL_CONTINUES
+    call BattleScript_WeatherFormChanges
+    end3
+
 BattleScript_TookAttack::
 	attackstring
 	pause B_WAIT_TIME_SHORT
@@ -4380,3 +4389,16 @@ BattleScript_ActionSelectionItemsCantBeUsed::
 BattleScript_FlushMessageBox::
 	printstring STRINGID_EMPTYSTRING3
 	return
+
+BattleScript_LowHpAbilityBoost::
+    pause B_WAIT_TIME_SHORT
+    printfromtable gLowHpAbilityBoostStringIds
+    waitmessage B_WAIT_TIME_LONG
+    return
+
+BattleScript_DampCuresStatus::
+	printstring STRINGID_PKMNSXCUREDYPROBLEM
+    waitmessage B_WAIT_TIME_LONG
+    updatestatusicon BS_ATTACKER
+    end3
+
