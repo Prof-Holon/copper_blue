@@ -4389,3 +4389,16 @@ BattleScript_ActionSelectionItemsCantBeUsed::
 BattleScript_FlushMessageBox::
 	printstring STRINGID_EMPTYSTRING3
 	return
+
+BattleScript_LowHpAbilityBoost::
+    pause B_WAIT_TIME_SHORT
+    printfromtable gLowHpAbilityBoostStringIds
+    waitmessage B_WAIT_TIME_LONG
+    return
+
+BattleScript_DampCuresStatus::
+	printstring STRINGID_PKMNSXCUREDYPROBLEM
+    waitmessage B_WAIT_TIME_LONG
+    updatestatusicon BS_ATTACKER
+    end3
+

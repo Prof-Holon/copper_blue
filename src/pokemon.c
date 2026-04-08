@@ -1637,6 +1637,26 @@ static const u16 sHMMoves[] =
     MOVE_ROCK_SMASH, MOVE_WATERFALL, MOVE_DIVE, HM_MOVES_END
 };
 
+#define ABILITY_MOVE_LIST_END 0xFFFF
+
+static const u16 sSlicingMoves[] =
+{
+    MOVE_CUT, MOVE_RAZOR_LEAF, MOVE_SLASH, MOVE_FURY_CUTTER,
+    MOVE_AIR_CUTTER, MOVE_AERIAL_ACE, MOVE_LEAF_BLADE, ABILITY_MOVE_LIST_END
+};
+
+static const u16 sClawMoves[] =
+{
+    MOVE_VISE_GRIP, MOVE_CLAMP, MOVE_CRABHAMMER, MOVE_METAL_CLAW,
+    MOVE_CRUSH_CLAW, MOVE_DRAGON_CLAW, MOVE_GUILLOTINE, ABILITY_MOVE_LIST_END
+};
+
+static const u16 sHeadMoves[] =
+{
+    MOVE_HEADBUTT, MOVE_MEGAHORN, MOVE_HORN_ATTACK,
+    MOVE_SKULL_BASH, MOVE_HORN_DRILL, ABILITY_MOVE_LIST_END
+};
+
 #if defined(FIRERED)
 // Attack forme
 static const u16 sDeoxysBaseStats[] = 
@@ -2381,6 +2401,16 @@ static void DeleteFirstMoveAndGiveMoveToBoxMon(struct BoxPokemon *boxMon, u16 mo
 #define ShouldGetStatBadgeBoost(flag, battler)\
     (!(gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_EREADER_TRAINER)) && FlagGet(flag) && GetBattlerSide(battler) == B_SIDE_PLAYER)
 
+static bool8 IsMoveInList(u16 move, const u16 *list)
+{
+    u32 i;
+    for (i = 0; list[i] != ABILITY_MOVE_LIST_END; i++)
+    {
+        if (list[i] == move)
+            return TRUE;
+    }
+    return FALSE;
+}
 
 s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *defender, u32 move, u16 sideStatus, u16 powerOverride, u8 typeOverride, u8 battlerIdAtk, u8 battlerIdDef)
 {
@@ -2434,8 +2464,10 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
         defenderHoldEffectParam = ItemId_GetHoldEffectParam(defender->item);
     }
 
-    if (attacker->ability == ABILITY_HUGE_POWER || attacker->ability == ABILITY_PURE_POWER)
+    if (attacker->ability == ABILITY_HUGE_POWER)
         attack *= 2;
+    if (attacker->ability == attacker->ability == ABILITY_PURE_POWER)
+        spAttack *= 2;
 
     if (ShouldGetStatBadgeBoost(FLAG_BADGE01_GET, battlerIdAtk))
         attack = (110 * attack) / 100;
@@ -2480,7 +2512,8 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     if (defender->ability == ABILITY_THICK_FAT && (type == TYPE_FIRE || type == TYPE_ICE))
         spAttack /= 2;
     if (attacker->ability == ABILITY_HUSTLE)
-        attack = (150 * attack) / 100;
+        && (gBattleMoves[move].flags & FLAG_MAKES_CONTACT)) // boost only for contact moves
+        gBattleMovePower = (150 * gBattleMovePower) / 100; // alternatively boost both attack and SpAttack but this is neater
     if (attacker->ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
         spAttack = (150 * spAttack) / 100;
     if (attacker->ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
@@ -2501,6 +2534,18 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
         gBattleMovePower = (150 * gBattleMovePower) / 100;
     if (type == TYPE_BUG && attacker->ability == ABILITY_SWARM && attacker->hp <= (attacker->maxHP / 3))
         gBattleMovePower = (150 * gBattleMovePower) / 100;
+    if (type == TYPE_FLYING && attacker->ability == ABILITY_EARLY_BIRD && attacker->hp <= (attacker->maxHP / 3))
+        gBattleMovePower = (150 * gBattleMovePower) / 100;
+    if (type == TYPE_ELECTRIC && attacker->ability == ABILITY_ILLUMINATE && attacker->hp <= (attacker->maxHP / 3)) // ADD illuminate electric boost
+            gBattleMovePower = (150 * gBattleMovePower) / 100;    
+    // Hyper Cutter: 1.5x boost for slicing or claw moves
+    if (attacker->ability == ABILITY_HYPER_CUTTER
+        && (IsMoveInList(move, sSlicingMoves) || IsMoveInList(move, sClawMoves)))
+        gBattleMovePower = (150 * gBattleMovePower) / 100;
+    // Rock Head: 1.5x boost for head moves
+    if (attacker->ability == ABILITY_ROCK_HEAD
+        && IsMoveInList(move, sHeadMoves))
+            gBattleMovePower = (150 * gBattleMovePower) / 100;
 
     // Self-destruct / Explosion cut defense in half
     if (gBattleMoves[gCurrentMove].effect == EFFECT_EXPLOSION)

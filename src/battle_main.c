@@ -3421,6 +3421,12 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
         else
             speedMultiplierBattler2 = 1;
     }
+    else if (gBattleWeather != B_WEATHER_NONE)  // weather exists but is being suppressed
+    {
+        // ADD: Air Lock doubles speed when actively negating weather
+        speedMultiplierBattler1 = (gBattleMons[battler1].ability == ABILITY_AIR_LOCK) ? 2 : 1;
+        speedMultiplierBattler2 = (gBattleMons[battler2].ability == ABILITY_AIR_LOCK) ? 2 : 1;
+    }
     else
     {
         speedMultiplierBattler1 = 1;
