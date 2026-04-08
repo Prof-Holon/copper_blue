@@ -2160,8 +2160,14 @@ void CalculateMonStats(struct Pokemon *mon)
     CALC_STAT(baseAttack, attackIV, attackEV, STAT_ATK, MON_DATA_ATK)
     CALC_STAT(baseDefense, defenseIV, defenseEV, STAT_DEF, MON_DATA_DEF)
     CALC_STAT(baseSpeed, speedIV, speedEV, STAT_SPEED, MON_DATA_SPEED)
-    CALC_STAT(baseSpAttack, spAttackIV, spAttackEV, STAT_SPATK, MON_DATA_SPATK)
-    CALC_STAT(baseSpDefense, spDefenseIV, spDefenseEV, STAT_SPDEF, MON_DATA_SPDEF)
+    {
+        u8 baseStat = gSpeciesInfo[species].baseSpAttack; // same value as baseSpDefense after Step 1
+        s32 n = (((2 * baseStat + spAttackIV + spAttackEV / 4) * level) / 100) + 5;
+        u8 nature = GetNature(mon);
+        n = ModifyStatByNature(nature, n, STAT_SPATK);  // use SpAtk column only        
+        SetMonData(mon, MON_DATA_SPATK, &n);
+        SetMonData(mon, MON_DATA_SPDEF, &n);   // mirror
+     }
 
     if (species == SPECIES_SHEDINJA)
     {
@@ -2438,7 +2444,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     attack = attacker->attack;
     defense = defender->defense;
     spAttack = attacker->spAttack;
-    spDefense = defender->spDefense;
+    spDefense = defender->spAttack; //updated to merge
 
     // Get attacker hold item info
     if (attacker->item == ITEM_ENIGMA_BERRY)
@@ -2625,13 +2631,13 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
         if (gCritMultiplier == 2)
         {
             // Critical hit, if defender has gained sp. defense stat stages then ignore stat increase
-            if (defender->statStages[STAT_SPDEF] < DEFAULT_STAT_STAGE)
-                APPLY_STAT_MOD(damageHelper, defender, spDefense, STAT_SPDEF)
+            if (defender->statStages[STAT_SPATK] < DEFAULT_STAT_STAGE)
+                APPLY_STAT_MOD(damageHelper, defender, spAttack, STAT_SPATK)
             else
-                damageHelper = spDefense;
+                damageHelper = spAttack;
         }
         else
-            APPLY_STAT_MOD(damageHelper, defender, spDefense, STAT_SPDEF)
+            APPLY_STAT_MOD(damageHelper, defender, spAttack, STAT_SPATK)
 
         damage = (damage / damageHelper);
         damage /= 50;
