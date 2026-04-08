@@ -428,6 +428,20 @@ static const u8 sText_ExclamationMark3[] = _("!");
 static const u8 sText_ExclamationMark4[] = _("!");
 static const u8 sText_ExclamationMark5[] = _("!");
 
+static const u8 sText_Overgrow_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Overgrow\nboosted its Grass moves!");
+static const u8 sText_Blaze_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Blaze\nboosted its Fire moves!");
+static const u8 sText_Torrent_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Torrent\nboosted its Water moves!");
+static const u8 sText_Swarm_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Swarm\nboosted its Bug moves!");
+static const u8 sText_Early_Bird_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Early Bird\nboosted its Flying moves!");
+
+const u16 gLowHpAbilityBoostStringIds[] = {
+    STRINGID_OVERGROWBOOSTED,            // 0
+    STRINGID_BLAZEBOOSTED,               // 1
+    STRINGID_TORRENTBOOSTED,             // 2
+    STRINGID_SWARMBOOSTED,               // 3
+    STRINGID_EARLYBIRDBOOSTED, // 4
+};
+
 static const u8 sText_HP2[] = _("HP");
 static const u8 sText_Attack2[] = _("ATTACK");
 static const u8 sText_Defense2[] = _("DEFENSE");

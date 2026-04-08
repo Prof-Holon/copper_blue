@@ -34,6 +34,21 @@ static const u16 sSoundMovesTable[] =
     MOVE_UPROAR, MOVE_METAL_SOUND, MOVE_GRASS_WHISTLE, MOVE_HYPER_VOICE, SOUND_MOVES_END
 };
 
+#define PRIO_MOVES_END 0xFFFF
+
+static const u16 sPrioMoves[] =
+{
+    MOVE_QUICK_ATTACK, MOVE_EXTREMESPEED, MOVE_FAKE_OUT, MOVE_FEINT, MOVE_MACH_PUNCH, PRIO_MOVES_END
+};
+
+#define TAUNT_MOVES_END 0xFFFF
+
+static const u16 sTauntMoves[] =
+{
+    MOVE_TAUNT, MOVE_FOLLOW_ME, TAUNT_MOVES_END
+};
+
+
 u8 GetBattlerForBattleScript(u8 caseId)
 {
     u8 ret = 0;
@@ -1836,6 +1851,36 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                     }
                 }
                 break;
+            case ABILITYEFFECT_HP_CHANGE:   // <-- ADD YOUR CODE HERE
+            {
+                u8 ability = gBattleMons[battler].ability;
+
+                if ((ability == ABILITY_BLAZE
+                  || ability == ABILITY_TORRENT
+                  || ability == ABILITY_OVERGROW
+                  || ability == ABILITY_SWARM)
+                  || ability == ABILITY_EARLY_BIRD
+                 && gBattleMons[battler].hp <= gBattleMons[battler].maxHP / 3
+                 && !(gStatuses3[battler] & STATUS3_LOW_HP_ABILITY_MSG))
+                 {
+                    gStatuses3[battler] |= STATUS3_LOW_HP_ABILITY_MSG;
+
+                    switch (ability)
+                    {
+                        case ABILITY_OVERGROW: gBattleCommunication[MULTISTRING_CHOOSER] = 0; break;
+                        case ABILITY_BLAZE:    gBattleCommunication[MULTISTRING_CHOOSER] = 1; break;
+                        case ABILITY_TORRENT:  gBattleCommunication[MULTISTRING_CHOOSER] = 2; break;
+                        case ABILITY_SWARM:    gBattleCommunication[MULTISTRING_CHOOSER] = 3; break;
+                        case ABILITY_EARLY_BIRD:    gBattleCommunication[MULTISTRING_CHOOSER] = 4; break;
+                    }
+
+                    gBattlerAbility = battler;
+                    BattleScriptPushCursor();
+                    gBattlescriptCurrInstr = BattleScript_LowHpAbilityBoost;
+                    effect++;
+                 }
+                }
+                break;
             }
             break;
         case ABILITYEFFECT_ENDTURN: // 1
@@ -1879,6 +1924,31 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                         effect++;
                     }
                     break;
+                case ABILITY_DAMP:
+                    if (WEATHER_HAS_EFFECT
+                     && (gBattleWeather & B_WEATHER_RAIN)
+                     && (gBattleMons[battler].status1 & STATUS1_ANY))
+                    {
+                        // Copy the same status string pattern from Shed Skin
+                        if (gBattleMons[battler].status1 & (STATUS1_POISON | STATUS1_TOXIC_POISON))
+                            StringCopy(gBattleTextBuff1, gStatusConditionString_PoisonJpn);
+                        if (gBattleMons[battler].status1 & STATUS1_SLEEP)
+                            StringCopy(gBattleTextBuff1, gStatusConditionString_SleepJpn);
+                        if (gBattleMons[battler].status1 & STATUS1_PARALYSIS)
+                            StringCopy(gBattleTextBuff1, gStatusConditionString_ParalysisJpn);
+                        if (gBattleMons[battler].status1 & STATUS1_BURN)
+                            StringCopy(gBattleTextBuff1, gStatusConditionString_BurnJpn);
+                        if (gBattleMons[battler].status1 & STATUS1_FREEZE)
+                            StringCopy(gBattleTextBuff1, gStatusConditionString_IceJpn);
+                        gBattleMons[battler].status1 = 0;
+                        gBattleMons[battler].status2 &= ~STATUS2_NIGHTMARE;
+                        gBattleScripting.battler = gActiveBattler = battler;
+                        BattleScriptPushCursorAndCallback(BattleScript_DampCuresStatus);
+                        BtlController_EmitSetMonData(BUFFER_A, REQUEST_STATUS_BATTLE, 0, 4, &gBattleMons[battler].status1);
+                        MarkBattlerForControllerExec(gActiveBattler);
+                        effect++;
+                    }
+                    break;
                 case ABILITY_SPEED_BOOST:
                     if (gBattleMons[battler].statStages[STAT_SPEED] < MAX_STAT_STAGE && gDisableStructs[battler].isFirstTurn != 2)
                     {
@@ -1905,6 +1975,38 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                         break;
                 }
                 if (sSoundMovesTable[i] != SOUND_MOVES_END)
+                {
+                    if (gBattleMons[gBattlerAttacker].status2 & STATUS2_MULTIPLETURNS)
+                        gHitMarker |= HITMARKER_NO_PPDEDUCT;
+                    gBattlescriptCurrInstr = BattleScript_SoundproofProtected;
+                    effect = 1;
+                }
+            }
+            // ADD: Inner Focus blocks priority moves
+            else if (gLastUsedAbility == ABILITY_INNER_FOCUS)
+            {
+                for (i = 0; sPrioMoves[i] != PRIO_MOVES_END; i++)
+                {
+                    if (sPrioMoves[i] == move)
+                        break;
+                }
+                if (sPrioMoves[i] != PRIO_MOVES_END)
+                {
+                    if (gBattleMons[gBattlerAttacker].status2 & STATUS2_MULTIPLETURNS)
+                        gHitMarker |= HITMARKER_NO_PPDEDUCT;
+                    gBattlescriptCurrInstr = BattleScript_SoundproofProtected;
+                    effect = 1;
+                }
+            }
+            // ADD: Oblivious blocks taunt/redirect moves
+            else if (gLastUsedAbility == ABILITY_OBLIVIOUS)
+            {
+                for (i = 0; sTauntMoves[i] != TAUNT_MOVES_END; i++)
+                {
+                    if (sTauntMoves[i] == move)
+                        break;
+                }
+                if (sTauntMoves[i] != TAUNT_MOVES_END)
                 {
                     if (gBattleMons[gBattlerAttacker].status2 & STATUS2_MULTIPLETURNS)
                         gHitMarker |= HITMARKER_NO_PPDEDUCT;
@@ -1966,6 +2068,7 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                         }
                     }
                     break;
+                    
                 }
                 if (effect == 1)
                 {

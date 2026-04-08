@@ -1084,8 +1084,10 @@ static void Cmd_accuracycheck(void)
             calc = (calc * 130) / 100; // 1.3 compound eyes boost
         if (WEATHER_HAS_EFFECT && gBattleMons[gBattlerTarget].ability == ABILITY_SAND_VEIL && gBattleWeather & B_WEATHER_SANDSTORM)
             calc = (calc * 80) / 100; // 1.2 sand veil loss
-        if (gBattleMons[gBattlerAttacker].ability == ABILITY_HUSTLE && IS_TYPE_PHYSICAL(type))
-            calc = (calc * 80) / 100; // 1.2 hustle loss
+        if (WEATHER_HAS_EFFECT && gBattleMons[gBattlerTarget].ability == ABILITY_WATER_VEIL && gBattleWeather & B_WEATHER_RAIN)
+            calc = (calc * 80) / 100; // 1.2 water veil loss
+        if (gBattleMons[gBattlerAttacker].ability == ABILITY_HUSTLE && (gBattleMoves[gCurrentMove].flags & FLAG_MAKES_CONTACT))
+            calc = (calc * 80) / 100; // 1.2 hustle loss for contact moves
 
         if (gBattleMons[gBattlerTarget].item == ITEM_ENIGMA_BERRY)
         {
@@ -1770,6 +1772,8 @@ static void Cmd_healthbarupdate(void)
             if (GetBattlerSide(gActiveBattler) == B_SIDE_PLAYER && gBattleMoveDamage > 0)
                 gBattleResults.playerMonWasDamaged = TRUE;
         }
+        if (gBattleMons[gActiveBattler].hp < oldHp && gBattleMons[gActiveBattler].hp != 0) // trigger ability if HP dropped
+            AbilityBattleEffects(ABILITYEFFECT_HP_CHANGE, gActiveBattler, 0, 0, 0);
     }
 
     gBattlescriptCurrInstr += 2;

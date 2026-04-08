@@ -389,7 +389,15 @@
 #define STRINGID_PKMNCOPIEDSECONDARYTYPE 387 //add to redefine conversion2
 #define STRINGID_PKMNSXSUMMONEDHAIL 388 //ADD snow warning
 
-#define BATTLESTRINGS_COUNT     389
+//add boosting abilities tooltip
+
+#define STRINGID_OVERGROWBOOSTED 389
+#define STRINGID_BLAZINGBOOSTED 390
+#define STRINGID_TORRENTBOOSTED 391
+#define STRINGID_SWARMBOOSTED 392
+#define STRINGID_EARLYBIRDBOOSTED 393
+
+#define BATTLESTRINGS_COUNT     394
 
 // This is the string id that gBattleStringsTable starts with.
 // String ids before this (e.g. STRINGID_INTROMSG) are not in the table,
