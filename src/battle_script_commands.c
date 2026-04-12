@@ -1064,7 +1064,17 @@ static void Cmd_accuracycheck(void)
         else
         {
             u8 acc = gBattleMons[gBattlerAttacker].statStages[STAT_ACC];
-            buff = acc + DEFAULT_STAT_STAGE - gBattleMons[gBattlerTarget].statStages[STAT_EVASION];
+            if (gBattleMons[gBattlerAttacker].ability == ABILITY_KEEN_EYE)
+            {
+                u8 targetEvasion = gBattleMons[gBattlerTarget].statStages[STAT_EVASION];
+                if (targetEvasion > DEFAULT_STAT_STAGE)
+                    targetEvasion = DEFAULT_STAT_STAGE;  // cap at neutral, drops still apply
+                buff = acc + DEFAULT_STAT_STAGE - targetEvasion;
+            }
+            else
+            {
+                buff = acc + DEFAULT_STAT_STAGE - gBattleMons[gBattlerTarget].statStages[STAT_EVASION];
+            }
         }
 
         if (buff < MIN_STAT_STAGE)
@@ -1102,7 +1112,7 @@ static void Cmd_accuracycheck(void)
 
         gPotentialItemEffectBattler = gBattlerTarget;
 
-        if (holdEffect == HOLD_EFFECT_EVASION_UP)
+        if (holdEffect == HOLD_EFFECT_EVASION_UP && gBattleMons[gBattlerAttacker].ability != ABILITY_KEEN_EYE)
             calc = (calc * (100 - param)) / 100;
 
         // final calculation
@@ -1212,6 +1222,15 @@ static void Cmd_critcalc(void)
                 + 2 * (holdEffect == HOLD_EFFECT_LUCKY_PUNCH && gBattleMons[gBattlerAttacker].species == SPECIES_CHANSEY)
                 + 2 * (holdEffect == HOLD_EFFECT_STICK && gBattleMons[gBattlerAttacker].species == SPECIES_FARFETCHD);
 
+        // ADD: high crit moves guarantee at least stage 4
+        if ((gBattleMoves[gCurrentMove].effect == EFFECT_HIGH_CRITICAL
+        || gBattleMoves[gCurrentMove].effect == EFFECT_SKY_ATTACK
+        || gBattleMoves[gCurrentMove].effect == EFFECT_BLAZE_KICK
+        || gBattleMoves[gCurrentMove].effect == EFFECT_POISON_TAIL)
+        && critChance < ARRAY_COUNT(sCriticalHitChance) - 1)
+        critChance = ARRAY_COUNT(sCriticalHitChance) - 1;
+        // END ADD
+
     if (critChance >= ARRAY_COUNT(sCriticalHitChance))
         critChance = ARRAY_COUNT(sCriticalHitChance) - 1;
 
@@ -1222,9 +1241,9 @@ static void Cmd_critcalc(void)
         gen1Denominator = gen3Denominator;
     else
     {
-        gen1Denominator = (68 * sCriticalHitChance[critChance]) / baseSpeed; // allows it to also scale based on crit stage, anything higher than 80 is better
-        if (gen1Denominator < 2)
-            gen1Denominator = 2;
+            gen1Denominator = (sCriticalHitChance[critChance] * 680) / (13 * baseSpeed); // (1/stage) * (1.3 * speed / 68) inverted        
+            if (gen1Denominator < 1)      // ADD: floor at 1 — effectively guaranteed crit
+                gen1Denominator = 1;
     }
     effectiveDenominator = (gen1Denominator < gen3Denominator) ? gen1Denominator : gen3Denominator;
     // END ADD
@@ -1232,7 +1251,7 @@ static void Cmd_critcalc(void)
     if ((gBattleMons[gBattlerTarget].ability != ABILITY_BATTLE_ARMOR && gBattleMons[gBattlerTarget].ability != ABILITY_SHELL_ARMOR)
      && !(gStatuses3[gBattlerAttacker] & STATUS3_CANT_SCORE_A_CRIT)
      && !(gBattleTypeFlags & BATTLE_TYPE_OLD_MAN_TUTORIAL)
-     && !(Random() % effectiveDenominator)
+     && ((Random() & 0xFF) < (256 / effectiveDenominator))
      && (!(gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE) || BtlCtrl_OakOldMan_TestState2Flag(1))
      && !(gBattleTypeFlags & BATTLE_TYPE_POKEDUDE))
         gCritMultiplier = 2;
@@ -1328,6 +1347,24 @@ static void Cmd_typecalc(void)
     }
 
     if (gBattleMons[gBattlerTarget].ability == ABILITY_LEVITATE && moveType == TYPE_GROUND)
+    {
+        gLastUsedAbility = gBattleMons[gBattlerTarget].ability;
+        gMoveResultFlags |= (MOVE_RESULT_MISSED | MOVE_RESULT_DOESNT_AFFECT_FOE);
+        gLastLandedMoves[gBattlerTarget] = 0;
+        gLastHitByType[gBattlerTarget] = 0;
+        gBattleCommunication[MISS_TYPE] = B_MSG_GROUND_MISS;
+        RecordAbilityBattle(gBattlerTarget, gLastUsedAbility);
+    }
+    else if (gBattleMons[gBattlerTarget].ability == ABILITY_IMMUNITY && moveType == TYPE_POISON)
+    {
+        gLastUsedAbility = gBattleMons[gBattlerTarget].ability;
+        gMoveResultFlags |= (MOVE_RESULT_MISSED | MOVE_RESULT_DOESNT_AFFECT_FOE);
+        gLastLandedMoves[gBattlerTarget] = 0;
+        gLastHitByType[gBattlerTarget] = 0;
+        gBattleCommunication[MISS_TYPE] = B_MSG_GROUND_MISS;
+        RecordAbilityBattle(gBattlerTarget, gLastUsedAbility);
+    }
+    else if (gBattleMons[gBattlerTarget].ability == ABILITY_LIGHTNING_ROD && moveType == TYPE_ELECTRIC)
     {
         gLastUsedAbility = gBattleMons[gBattlerTarget].ability;
         gMoveResultFlags |= (MOVE_RESULT_MISSED | MOVE_RESULT_DOESNT_AFFECT_FOE);
@@ -2525,7 +2562,10 @@ void SetMoveEffect(bool8 primary, u8 certain)
                 }
                 else
                 {
-                    gBattleMons[gEffectBattler].status2 |= STATUS2_WRAPPED_TURN((Random() & 2) + 3); // 2-5 turns
+                    if (gBattleMons[gEffectBattler].ability == ABILITY_SUCTION_CUPS)
+                    gBattleMons[gEffectBattler].status2 |= STATUS2_WRAPPED_TURN((Random() & 1) + 4); // 4-5 turns
+                    else
+                    gBattleMons[gEffectBattler].status2 |= STATUS2_WRAPPED_TURN((Random() & 3) + 2); // 2-5 turns
 
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 0) = gCurrentMove;
                     *(gBattleStruct->wrappedMove + gEffectBattler * 2 + 1) = gCurrentMove >> 8;
@@ -4313,6 +4353,21 @@ static void Cmd_moveend(void)
             gBattleScripting.moveendState++;
             break;
         case MOVEEND_UPDATE_LAST_MOVES:
+            // ADD: cancel wrap and attacker lock-in if trapping move missed
+            if (gMoveResultFlags & MOVE_RESULT_MISSED)
+            {
+                for (i = 0; i < gBattlersCount; i++)
+                {
+                    if ((gBattleMons[i].status2 & STATUS2_WRAPPED)
+                     && *(gBattleStruct->wrappedBy + i) == gBattlerAttacker)
+                    {
+                        gBattleMons[i].status2 &= ~STATUS2_WRAPPED;
+                        CancelMultiTurnMoves(gBattlerAttacker);
+                        break;
+                    }
+                }
+            }
+            // END ADD
             if (gHitMarker & HITMARKER_SWAP_ATTACKER_TARGET)
             {
                 gActiveBattler = gBattlerAttacker;
@@ -5728,6 +5783,15 @@ static void Cmd_removeitem(void)
     usedHeldItem = &gBattleStruct->usedHeldItems[gActiveBattler];
     *usedHeldItem = gBattleMons[gActiveBattler].item;
     gBattleMons[gActiveBattler].item = ITEM_NONE;
+
+    // Pickup effect: restore consumed item once per battle
+    if (gBattleMons[gActiveBattler].ability == ABILITY_PICKUP
+        && !gBattleStruct->pickupUsed[gActiveBattler]
+        && *usedHeldItem != ITEM_NONE)
+    {
+        gBattleMons[gActiveBattler].item = *usedHeldItem;
+        gBattleStruct->pickupUsed[gActiveBattler] = TRUE;
+    }
 
     BtlController_EmitSetMonData(BUFFER_A, REQUEST_HELDITEM_BATTLE, 0, sizeof(gBattleMons[gActiveBattler].item), &gBattleMons[gActiveBattler].item);
     MarkBattlerForControllerExec(gActiveBattler);
@@ -7203,9 +7267,12 @@ static void Cmd_tryKO(void)
         gSpecialStatuses[gBattlerTarget].focusBanded = 1;
     }
 
-    if (gBattleMons[gBattlerTarget].ability == ABILITY_STURDY)
+    if (gBattleMons[gBattlerTarget].ability == ABILITY_STURDY
+    && gBattleMons[gBattlerTarget].hp == gBattleMons[gBattlerTarget].maxHP
+    && gBattleMoveDamage >= gBattleMons[gBattlerTarget].hp
+    && !(gMoveResultFlags & MOVE_RESULT_NO_EFFECT))
     {
-        gMoveResultFlags |= MOVE_RESULT_MISSED;
+        gBattleMoveDamage = gBattleMons[gBattlerTarget].hp - 1;
         gLastUsedAbility = ABILITY_STURDY;
         gBattlescriptCurrInstr = BattleScript_SturdyPreventsOHKO;
         RecordAbilityBattle(gBattlerTarget, ABILITY_STURDY);

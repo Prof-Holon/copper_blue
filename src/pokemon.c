@@ -2412,6 +2412,36 @@ static bool8 IsMoveInList(u16 move, const u16 *list)
     return FALSE;
 }
 
+bool32 HasOtherElectricType(u8 battler)
+{
+    u8 i;
+
+    for (i = 0; i < gBattlersCount; i++)
+    {
+        if (i != battler
+        && gBattleMons[i].hp != 0
+        && (gBattleMons[i].type1 == TYPE_ELECTRIC || gBattleMons[i].type2 == TYPE_ELECTRIC))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+bool32 HasOtherRockType(u8 battler)
+{
+    u8 i;
+
+    for (i = 0; i < gBattlersCount; i++)
+    {
+        if (i != battler
+        && gBattleMons[i].hp != 0
+        && (gBattleMons[i].type1 == TYPE_ROCK || gBattleMons[i].type2 == TYPE_ROCK))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *defender, u32 move, u16 sideStatus, u16 powerOverride, u8 typeOverride, u8 battlerIdAtk, u8 battlerIdDef)
 {
     u32 i;
@@ -2509,14 +2539,21 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
         defense *= 2;
     if (attackerHoldEffect == HOLD_EFFECT_THICK_CLUB && (attacker->species == SPECIES_CUBONE || attacker->species == SPECIES_MAROWAK))
         attack *= 2;
+    // Apply effects of abilities
     if (defender->ability == ABILITY_THICK_FAT && (type == TYPE_FIRE || type == TYPE_ICE))
         spAttack /= 2;
+    if (defender->ability == ABILITY_MAGMA_ARMOR && (type == TYPE_FIRE || type == TYPE_GROUND))
+        gBattleMovePower = (50 * gBattleMovePower) / 100;
     if (attacker->ability == ABILITY_HUSTLE)
         && (gBattleMoves[move].flags & FLAG_MAKES_CONTACT)) // boost only for contact moves
         gBattleMovePower = (150 * gBattleMovePower) / 100; // alternatively boost both attack and SpAttack but this is neater
-    if (attacker->ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
+    if (attacker->ability == ABILITY_PLUS && HasOtherRockType(gBattlerAttacker))
         spAttack = (150 * spAttack) / 100;
-    if (attacker->ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
+    if (attacker->ability == ABILITY_MINUS && HasOtherElectricType(gBattlerAttacker))
+        spAttack = (150 * spAttack) / 100;
+    if (defender->ability == ABILITY_PLUS && HasOtherRockType(gBattlerAttacker))
+        spAttack = (150 * spAttack) / 100;
+    if (defender->ability == ABILITY_MINUS && HasOtherElectricType(gBattlerAttacker))
         spAttack = (150 * spAttack) / 100;
     if (attacker->ability == ABILITY_GUTS && attacker->status1)
         attack = (150 * attack) / 100;
@@ -2562,7 +2599,14 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
                 damage = attack;
         }
         else
+        {
+            // ADD: Pressure on defender ignores attacker's Attack boosts
+            if (defender->ability == ABILITY_PRESSURE
+             && attacker->statStages[STAT_ATK] > DEFAULT_STAT_STAGE)
+                damage = attack;
+            else
             APPLY_STAT_MOD(damage, attacker, attack, STAT_ATK)
+        }
 
         damage = damage * gBattleMovePower;
         damage *= (2 * attacker->level / 5 + 2);
@@ -2576,7 +2620,14 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
                 damageHelper = defense;
         }
         else
-            APPLY_STAT_MOD(damageHelper, defender, defense, STAT_DEF)
+        {
+            // ADD: Pressure on attacker ignores foe Defense boosts
+            if (attacker->ability == ABILITY_PRESSURE
+             && defender->statStages[STAT_DEF] > DEFAULT_STAT_STAGE)
+                damageHelper = defense;
+            else
+                APPLY_STAT_MOD(damageHelper, defender, defense, STAT_DEF)
+        }
 
         damage = damage / damageHelper;
         damage /= 50;
@@ -2617,8 +2668,14 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
                 damage = spAttack;
         }
         else
-            APPLY_STAT_MOD(damage, attacker, spAttack, STAT_SPATK)
-
+        {
+            // ADD: Pressure on defender ignores attacker's SpAtk boosts
+            if (defender->ability == ABILITY_PRESSURE
+             && attacker->statStages[STAT_SPATK] > DEFAULT_STAT_STAGE)
+                damage = spAttack;
+            else
+                APPLY_STAT_MOD(damage, attacker, spAttack, STAT_SPATK)
+        }
         damage = damage * gBattleMovePower;
         damage *= (2 * attacker->level / 5 + 2);
 
@@ -2631,7 +2688,14 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
                 damageHelper = spDefense;
         }
         else
-            APPLY_STAT_MOD(damageHelper, defender, spDefense, STAT_SPDEF)
+        {
+            // ADD: Pressure ignores SpDef boosts
+            if (attacker->ability == ABILITY_PRESSURE
+             && defender->statStages[STAT_SPATK] > DEFAULT_STAT_STAGE)
+                damageHelper = spDefense;
+            else
+                APPLY_STAT_MOD(damageHelper, defender, spDefense, STAT_SPDEF)
+        }
 
         damage = (damage / damageHelper);
         damage /= 50;

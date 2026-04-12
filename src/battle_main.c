@@ -3197,16 +3197,18 @@ static void HandleTurnActionSelectionState(void)
                     break;
                 case B_ACTION_SWITCH:
                     *(gBattleStruct->battlerPartyIndexes + gActiveBattler) = gBattlerPartyIndexes[gActiveBattler];
-                    if (gBattleMons[gActiveBattler].status2 & (STATUS2_WRAPPED | STATUS2_ESCAPE_PREVENTION) || gStatuses3[gActiveBattler] & STATUS3_ROOTED)
+                    if (gBattleMons[gActiveBattler].status2 & (STATUS2_WRAPPED | STATUS2_ESCAPE_PREVENTION) || gStatuses3[gActiveBattler] & STATUS3_ROOTED 
+                    && gBattleMons[gActiveBattler].ability != ABILITY_RUN_AWAY)) //added
                     {
                         BtlController_EmitChoosePokemon(BUFFER_A, PARTY_ACTION_CANT_SWITCH, 6, ABILITY_NONE, gBattleStruct->battlerPartyOrders[gActiveBattler]);
                     }
-                    else if ((i = ABILITY_ON_OPPOSING_FIELD(gActiveBattler, ABILITY_SHADOW_TAG))
-                          || ((i = ABILITY_ON_OPPOSING_FIELD(gActiveBattler, ABILITY_ARENA_TRAP))
+                    else if (gBattleMons[gActiveBattler].ability != ABILITY_RUN_AWAY  // ADD
+                            && ((i = ABILITY_ON_OPPOSING_FIELD(gActiveBattler, ABILITY_SHADOW_TAG))
+                            || ((i = ABILITY_ON_OPPOSING_FIELD(gActiveBattler, ABILITY_ARENA_TRAP))
                               && !IS_BATTLER_OF_TYPE(gActiveBattler, TYPE_FLYING)
                               && gBattleMons[gActiveBattler].ability != ABILITY_LEVITATE)
-                          || ((i = AbilityBattleEffects(ABILITYEFFECT_CHECK_FIELD_EXCEPT_BATTLER, gActiveBattler, ABILITY_MAGNET_PULL, 0, 0))
-                              && IS_BATTLER_OF_TYPE(gActiveBattler, TYPE_STEEL)))
+                            || ((i = AbilityBattleEffects(ABILITYEFFECT_CHECK_FIELD_EXCEPT_BATTLER, gActiveBattler, ABILITY_MAGNET_PULL, 0, 0))
+                              && IS_BATTLER_OF_TYPE(gActiveBattler, TYPE_ELECTRIC || TYPE_ROCK)))
                     {
                         BtlController_EmitChoosePokemon(BUFFER_A, ((i - 1) << 4) | PARTY_ACTION_ABILITY_PREVENTS, 6, gLastUsedAbility, gBattleStruct->battlerPartyOrders[gActiveBattler]);
                     }
@@ -3427,6 +3429,22 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
         speedMultiplierBattler1 = (gBattleMons[battler1].ability == ABILITY_AIR_LOCK) ? 2 : 1;
         speedMultiplierBattler2 = (gBattleMons[battler2].ability == ABILITY_AIR_LOCK) ? 2 : 1;
     }
+    // add vital spirit speed boost for both battlers
+    if ((gBattleMons[battler1].ability == ABILITY_VITAL_SPIRIT && battler1->status1)
+        speedMultiplierBattler1 = 2;
+    if ((gBattleMons[battler2].ability == ABILITY_VITAL_SPIRIT && battler2->status1)
+        speedMultiplierBattler2 = 2;
+
+    // add speed doubling if Minus/Plus ally
+    if ((gBattleMons[battler1].ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
+        speedMultiplierBattler1 = 2;
+    if ((gBattleMons[battler2].ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
+        speedMultiplierBattler2 = 2;
+    if ((gBattleMons[battler1].ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
+        speedMultiplierBattler1 = 2;
+    if ((gBattleMons[battler2].ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
+        speedMultiplierBattler2 = 2;
+
     else
     {
         speedMultiplierBattler1 = 1;
@@ -4331,7 +4349,8 @@ static void HandleAction_Run(void)
         }
         else
         {
-            if (gBattleMons[gBattlerAttacker].status2 & (STATUS2_WRAPPED | STATUS2_ESCAPE_PREVENTION))
+            if (gBattleMons[gBattlerAttacker].status2 & (STATUS2_WRAPPED | STATUS2_ESCAPE_PREVENTION)
+            && gBattleMons[gBattlerAttacker].ability != ABILITY_RUN_AWAY)) //added
             {
                 gBattleCommunication[MULTISTRING_CHOOSER] = 4;
                 gBattlescriptCurrInstr = BattleScript_PrintFailedToRunString;

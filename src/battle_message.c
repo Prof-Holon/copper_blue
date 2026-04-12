@@ -428,19 +428,24 @@ static const u8 sText_ExclamationMark3[] = _("!");
 static const u8 sText_ExclamationMark4[] = _("!");
 static const u8 sText_ExclamationMark5[] = _("!");
 
-static const u8 sText_Overgrow_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Overgrow\nboosted its Grass moves!");
-static const u8 sText_Blaze_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Blaze\nboosted its Fire moves!");
-static const u8 sText_Torrent_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Torrent\nboosted its Water moves!");
-static const u8 sText_Swarm_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Swarm\nboosted its Bug moves!");
-static const u8 sText_Early_Bird_Boosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Early Bird\nboosted its Flying moves!");
+static const u8 sText_OvergrowBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Overgrow\nboosted its Grass moves!");
+static const u8 sText_BlazeBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Blaze\nboosted its Fire moves!");
+static const u8 sText_TorrentBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Torrent\nboosted its Water moves!");
+static const u8 sText_SwarmBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Swarm\nboosted its Bug moves!");
+static const u8 sText_EarlyBirdBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Early Bird\nboosted its Flying moves!");
+static const u8 sText_IlluminateBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Illuminate\nboosted its Electric moves!");
 
 const u16 gLowHpAbilityBoostStringIds[] = {
     STRINGID_OVERGROWBOOSTED,            // 0
     STRINGID_BLAZEBOOSTED,               // 1
     STRINGID_TORRENTBOOSTED,             // 2
     STRINGID_SWARMBOOSTED,               // 3
-    STRINGID_EARLYBIRDBOOSTED, // 4
+    STRINGID_EARLYBIRDBOOSTED,           // 4
+    STRINGID_ILLUMINATEBOOSTED,          // 5
 };
+
+static const u8 sText_Sturdy[] = _("{B_ATK_NAME_WITH_PREFIX}'s Sturdy\nallowed it to endure the hit!");
+static const u8 sText_Truant[] = _("{B_ATK_NAME_WITH_PREFIX} is loafing around and recovered HP!");
 
 static const u8 sText_HP2[] = _("HP");
 static const u8 sText_Attack2[] = _("ATTACK");
@@ -906,7 +911,15 @@ const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_ST
     [STRINGID_TRAINER1MON1COMEBACK - BATTLESTRINGS_TABLE_START]          = sText_Trainer1RecallPkmn1,
     [STRINGID_TRAINER1WINTEXT - BATTLESTRINGS_TABLE_START]               = sText_Trainer1WinText,
     [STRINGID_TRAINER1MON2COMEBACK - BATTLESTRINGS_TABLE_START]          = sText_Trainer1RecallPkmn2,
-    [STRINGID_TRAINER1MON1AND2COMEBACK - BATTLESTRINGS_TABLE_START]      = sText_Trainer1RecallBoth
+    [STRINGID_TRAINER1MON1AND2COMEBACK - BATTLESTRINGS_TABLE_START]      = sText_Trainer1RecallBoth,
+    [STRINGID_STURDY - BATTLESTRINGS_TABLE_START]                        = sText_Sturdy,
+    [STRINGID_TRUANTRESTOREDHP - BATTLESTRINGS_TABLE_START]              = sText_Truant,
+    [STRINGID_OVERGROWBOOSTED - BATTLESTRINGS_TABLE_START]               = sText_OvergrowBoosted,           
+    [STRINGID_BLAZEBOOSTED - BATTLESTRINGS_TABLE_START]                   = sText_BlazeBoosted,               
+    [STRINGID_TORRENTBOOSTED- BATTLESTRINGS_TABLE_START]                  = sText_TorrentBoosted,             
+    [STRINGID_SWARMBOOSTED - BATTLESTRINGS_TABLE_START] = sText_SwarmBoosted,,               
+    [STRINGID_EARLYBIRDBOOSTED - BATTLESTRINGS_TABLE_START] = sText_EarlyBirdBoosted,           
+    [STRINGID_ILLUMINATEBOOSTED - BATTLESTRINGS_TABLE_START] = sText_IlluminateBoosted
 };
 
 const u16 gMissStringIds[] =
