@@ -452,6 +452,7 @@ BattleScript_DreamEaterWorked:
 	waitmessage B_WAIT_TIME_LONG
 	resultmessage
 	waitmessage B_WAIT_TIME_LONG
+	jumpifability BS_TARGET, ABILITY_LIQUID_OOZE, BattleScript_AbsorbLiquidOoze
 	negativedamage
 	orword gHitMarker, HITMARKER_IGNORE_SUBSTITUTE
 	healthbarupdate BS_ATTACKER
@@ -3992,6 +3993,8 @@ BattleScript_IntimidateActivationAnimLoop::
 	jumpifability BS_TARGET, ABILITY_CLEAR_BODY, BattleScript_IntimidateAbilityFail
 	jumpifability BS_TARGET, ABILITY_HYPER_CUTTER, BattleScript_IntimidateAbilityFail
 	jumpifability BS_TARGET, ABILITY_WHITE_SMOKE, BattleScript_IntimidateAbilityFail
+	jumpifability BS_TARGET, ABILITY_OBLIVIOUS, BattleScript_IntimidateAbilityFail
+	jumpifability BS_TARGET, ABILITY_INNER_FOCUS, BattleScript_IntimidateAbilityFail
 	statbuffchange STAT_CHANGE_ALLOW_PTR | STAT_CHANGE_NOT_PROTECT_AFFECTED, BattleScript_IntimidateFail
 	jumpifbyte CMP_GREATER_THAN, cMULTISTRING_CHOOSER, 1, BattleScript_IntimidateFail
 	setgraphicalstatchangevalues
@@ -4037,9 +4040,9 @@ BattleScript_TookAttack::
 
 BattleScript_SturdyPreventsOHKO::
 	pause B_WAIT_TIME_SHORT
-	printstring STRINGID_PKMNPROTECTEDBY
-	pause B_WAIT_TIME_LONG
-	goto BattleScript_MoveEnd
+	printstring STRINGID_STURDY
+	pause B_WAIT_TIME_SHORT
+	return
 
 BattleScript_DampStopsExplosion::
 	pause B_WAIT_TIME_SHORT
@@ -4402,3 +4405,10 @@ BattleScript_DampCuresStatus::
     updatestatusicon BS_ATTACKER
     end3
 
+BattleScript_TruantHeal::
+    printstring STRINGID_TRUANTRESTOREDHP
+    waitmessage B_WAIT_TIME_LONG
+    orword gHitMarker, HITMARKER_IGNORE_SUBSTITUTE
+    healthbarupdate BS_ATTACKER
+    datahpupdate BS_ATTACKER
+    end3

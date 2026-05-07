@@ -392,12 +392,20 @@
 //add boosting abilities tooltip
 
 #define STRINGID_OVERGROWBOOSTED 389
-#define STRINGID_BLAZINGBOOSTED 390
+#define STRINGID_BLAZEBOOSTED 390
 #define STRINGID_TORRENTBOOSTED 391
 #define STRINGID_SWARMBOOSTED 392
 #define STRINGID_EARLYBIRDBOOSTED 393
+#define STRINGID_ILLUMINATEBOOSTED 394
 
-#define BATTLESTRINGS_COUNT     394
+
+//add sturdy
+#define STRINGID_STURDY 395
+
+//add truant
+#define STRINGID_TRUANTRESTOREDHP 396
+
+#define BATTLESTRINGS_COUNT     397
 
 // This is the string id that gBattleStringsTable starts with.
 // String ids before this (e.g. STRINGID_INTROMSG) are not in the table,

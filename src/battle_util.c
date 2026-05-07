@@ -817,7 +817,7 @@ u8 DoBattlerEndTurnEffects(void)
                     }
                     else
                     {
-                        gBattleMoveDamage = gBattleMons[gActiveBattler].maxHP / 8;
+                        gBattleMoveDamage = gBattleMons[gActiveBattler].maxHP / 16;
                     }
                     if (gBattleMoveDamage == 0)
                         gBattleMoveDamage = 1;
@@ -1309,7 +1309,7 @@ u8 AtkCanceller_UnableToUseMove(void)
                 else
                 {
                     u8 toSub;
-                    if (gBattleMons[gBattlerAttacker].ability == ABILITY_EARLY_BIRD)
+                    if (gBattleMons[gBattlerAttacker].ability == ABILITY_LIMBER) // changed old Early Bird effect to Limber
                         toSub = 2;
                     else
                         toSub = 1;
@@ -1373,6 +1373,16 @@ u8 AtkCanceller_UnableToUseMove(void)
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_LOAFING;
                 gBattlescriptCurrInstr = BattleScript_MoveUsedLoafingAround;
                 gMoveResultFlags |= MOVE_RESULT_MISSED;
+                // ADD: heal 1/16 max HP on loafing turns
+                if (gBattleMons[gBattlerAttacker].maxHP > gBattleMons[gBattlerAttacker].hp)
+                {
+                    gBattleMoveDamage = gBattleMons[gBattlerAttacker].maxHP / 16;
+                    if (gBattleMoveDamage == 0)
+                        gBattleMoveDamage = 1;
+                    gBattleMoveDamage *= -1;
+                    gBattleScripting.battler = gBattlerAttacker;
+                    BattleScriptPushCursorAndCallback(BattleScript_TruantHeal);
+                }
                 effect = 1;
             }
             gBattleStruct->atkCancellerTracker++;
@@ -1860,6 +1870,9 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                   || ability == ABILITY_OVERGROW
                   || ability == ABILITY_SWARM)
                   || ability == ABILITY_EARLY_BIRD
+                  || ability == ABILITY_ILLUMINATE
+                  || ability == ABILITY_STENCH
+
                  && gBattleMons[battler].hp <= gBattleMons[battler].maxHP / 3
                  && !(gStatuses3[battler] & STATUS3_LOW_HP_ABILITY_MSG))
                  {
@@ -1872,6 +1885,8 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                         case ABILITY_TORRENT:  gBattleCommunication[MULTISTRING_CHOOSER] = 2; break;
                         case ABILITY_SWARM:    gBattleCommunication[MULTISTRING_CHOOSER] = 3; break;
                         case ABILITY_EARLY_BIRD:    gBattleCommunication[MULTISTRING_CHOOSER] = 4; break;
+                        case ABILITY_ILLUMINATE:    gBattleCommunication[MULTISTRING_CHOOSER] = 5; break;
+                        case ABILITY_STENCH:    gBattleCommunication[MULTISTRING_CHOOSER] = 6; break;
                     }
 
                     gBattlerAbility = battler;
@@ -1899,6 +1914,19 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                         if (gBattleMoveDamage == 0)
                             gBattleMoveDamage = 1;
                         gBattleMoveDamage *= -1;
+                        effect++;
+                    }
+                    break;
+                case ABILITY_TRUANT:
+                    if ((gBattleMons[battler].status1 & STATUS1_SLEEP)
+                    && gBattleMons[battler].maxHP > gBattleMons[battler].hp)
+                    {
+                        gBattleMoveDamage = gBattleMons[battler].maxHP / 16;
+                        if (gBattleMoveDamage == 0)
+                            gBattleMoveDamage = 1;
+                        gBattleMoveDamage *= -1;
+                        gBattleScripting.battler = gActiveBattler = battler;
+                        BattleScriptPushCursorAndCallback(BattleScript_TruantHeal);
                         effect++;
                     }
                     break;
@@ -1982,24 +2010,8 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                     effect = 1;
                 }
             }
-            // ADD: Inner Focus blocks priority moves
-            else if (gLastUsedAbility == ABILITY_INNER_FOCUS)
-            {
-                for (i = 0; sPrioMoves[i] != PRIO_MOVES_END; i++)
-                {
-                    if (sPrioMoves[i] == move)
-                        break;
-                }
-                if (sPrioMoves[i] != PRIO_MOVES_END)
-                {
-                    if (gBattleMons[gBattlerAttacker].status2 & STATUS2_MULTIPLETURNS)
-                        gHitMarker |= HITMARKER_NO_PPDEDUCT;
-                    gBattlescriptCurrInstr = BattleScript_SoundproofProtected;
-                    effect = 1;
-                }
-            }
-            // ADD: Oblivious blocks taunt/redirect moves
-            else if (gLastUsedAbility == ABILITY_OBLIVIOUS)
+            // ADD: Oblivious and Inner Focus blocks taunt/redirect moves
+            else if (gLastUsedAbility == ABILITY_OBLIVIOUS || gLastUsedAbility == ABILITY_INNER_FOCUS)
             {
                 for (i = 0; sTauntMoves[i] != TAUNT_MOVES_END; i++)
                 {
@@ -2068,7 +2080,19 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                         }
                     }
                     break;
-                    
+                case ABILITY_LIGHTNING_ROD:
+                    if (moveType == TYPE_ELECTRIC)
+                    {
+                        gLastUsedAbility = ABILITY_LIGHTNING_ROD;
+                        RecordAbilityBattle(battler, ABILITY_LIGHTNING_ROD);
+
+                        // Apply permanent Charge boost until switch
+                        gStatuses3[battler] |= STATUS3_CHARGED_UP;
+
+                        gBattlescriptCurrInstr = BattleScript_MoveHPDrain; // reuse generic ability popup
+                        effect = 2; // cancels the hit (immunity)
+                    }
+                    break;
                 }
                 if (effect == 1)
                 {
@@ -2239,7 +2263,6 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                     }
                     break;
                 case ABILITY_INSOMNIA:
-                case ABILITY_VITAL_SPIRIT:
                     if (gBattleMons[battler].status1 & STATUS1_SLEEP)
                     {
                         gBattleMons[battler].status2 &= ~STATUS2_NIGHTMARE;

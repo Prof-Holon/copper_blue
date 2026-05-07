@@ -450,6 +450,7 @@ struct BattleStruct
     u8 wishPerishSongState;
     u8 wishPerishSongBattlerId;
     u8 lastAttackerToFaintOpponent;
+    u8 pickupUsed[MAX_BATTLERS_COUNT];
     // align 4
     union {
         struct LinkBattlerHeader linkBattlerHeader;
