@@ -434,6 +434,8 @@ static const u8 sText_TorrentBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Torrent\n
 static const u8 sText_SwarmBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Swarm\nboosted its Bug moves!");
 static const u8 sText_EarlyBirdBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Early Bird\nboosted its Flying moves!");
 static const u8 sText_IlluminateBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Illuminate\nboosted its Electric moves!");
+static const u8 sText_StenchBoosted[] = _("{B_ATK_NAME_WITH_PREFIX}'s Stench\nboosted its Poison moves!");
+
 
 const u16 gLowHpAbilityBoostStringIds[] = {
     STRINGID_OVERGROWBOOSTED,            // 0
@@ -442,6 +444,8 @@ const u16 gLowHpAbilityBoostStringIds[] = {
     STRINGID_SWARMBOOSTED,               // 3
     STRINGID_EARLYBIRDBOOSTED,           // 4
     STRINGID_ILLUMINATEBOOSTED,          // 5
+    STRINGID_STENCHBOOSTED,          // 6
+
 };
 
 static const u8 sText_Sturdy[] = _("{B_ATK_NAME_WITH_PREFIX}'s Sturdy\nallowed it to endure the hit!");
@@ -920,6 +924,8 @@ const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_ST
     [STRINGID_SWARMBOOSTED - BATTLESTRINGS_TABLE_START] = sText_SwarmBoosted,,               
     [STRINGID_EARLYBIRDBOOSTED - BATTLESTRINGS_TABLE_START] = sText_EarlyBirdBoosted,           
     [STRINGID_ILLUMINATEBOOSTED - BATTLESTRINGS_TABLE_START] = sText_IlluminateBoosted
+    [STRINGID_STENCHBOOSTED - BATTLESTRINGS_TABLE_START] = sText_StenchBoosted
+
 };
 
 const u16 gMissStringIds[] =

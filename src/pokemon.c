@@ -2574,7 +2574,9 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     if (type == TYPE_FLYING && attacker->ability == ABILITY_EARLY_BIRD && attacker->hp <= (attacker->maxHP / 3))
         gBattleMovePower = (150 * gBattleMovePower) / 100;
     if (type == TYPE_ELECTRIC && attacker->ability == ABILITY_ILLUMINATE && attacker->hp <= (attacker->maxHP / 3)) // ADD illuminate electric boost
-            gBattleMovePower = (150 * gBattleMovePower) / 100;    
+            gBattleMovePower = (150 * gBattleMovePower) / 100;  
+    if (type == TYPE_POISON && attacker->ability == ABILITY_STENCH && attacker->hp <= (attacker->maxHP / 3)) // ADD stench poison boost
+            gBattleMovePower = (150 * gBattleMovePower) / 100;  
     // Hyper Cutter: 1.5x boost for slicing or claw moves
     if (attacker->ability == ABILITY_HYPER_CUTTER
         && (IsMoveInList(move, sSlicingMoves) || IsMoveInList(move, sClawMoves)))

@@ -1870,6 +1870,9 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                   || ability == ABILITY_OVERGROW
                   || ability == ABILITY_SWARM)
                   || ability == ABILITY_EARLY_BIRD
+                  || ability == ABILITY_ILLUMINATE
+                  || ability == ABILITY_STENCH
+
                  && gBattleMons[battler].hp <= gBattleMons[battler].maxHP / 3
                  && !(gStatuses3[battler] & STATUS3_LOW_HP_ABILITY_MSG))
                  {
@@ -1882,6 +1885,8 @@ u8 AbilityBattleEffects(u8 caseID, u8 battler, u8 ability, u8 special, u16 moveA
                         case ABILITY_TORRENT:  gBattleCommunication[MULTISTRING_CHOOSER] = 2; break;
                         case ABILITY_SWARM:    gBattleCommunication[MULTISTRING_CHOOSER] = 3; break;
                         case ABILITY_EARLY_BIRD:    gBattleCommunication[MULTISTRING_CHOOSER] = 4; break;
+                        case ABILITY_ILLUMINATE:    gBattleCommunication[MULTISTRING_CHOOSER] = 5; break;
+                        case ABILITY_STENCH:    gBattleCommunication[MULTISTRING_CHOOSER] = 6; break;
                     }
 
                     gBattlerAbility = battler;
