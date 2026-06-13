@@ -5225,6 +5225,21 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 type, u16 evolutionItem)
                 if (gEvolutionTable[species][i].param <= beauty)
                     targetSpecies = gEvolutionTable[species][i].targetSpecies;
                 break;
+            case EVO_TRIO: // ADD for Magnemite and Diglett
+                if (gEvolutionTable[species][i].param <= level)
+                    {
+                        u8 j;
+                        u8 sameSpeciesCount = 0;
+                        for (j = 0; j < gPlayerPartyCount; j++)
+                        {
+                            if (GetMonData(&gPlayerParty[j], MON_DATA_SPECIES, NULL) == species
+                             && GetMonData(&gPlayerParty[j], MON_DATA_LEVEL, NULL) > 0)
+                                sameSpeciesCount++;
+                        }
+                        if (sameSpeciesCount >= 3)
+                            targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    }
+                break;
             }
         }
         break;
