@@ -2918,13 +2918,13 @@ static void Cmd_seteffectprimary(void)
 static void Cmd_seteffectsecondary(void) //should prevent same-type status effects
 switch (gBattleCommunication[MOVE_EFFECT_BYTE])
 {
-case MOVE_EFFECT_SLEEP:
-case MOVE_EFFECT_POISON:
-case MOVE_EFFECT_BURN:
-case MOVE_EFFECT_FREEZE:
-case MOVE_EFFECT_PARALYSIS:
-case MOVE_EFFECT_TOXIC:
-if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
+    case MOVE_EFFECT_SLEEP:
+    case MOVE_EFFECT_POISON:
+    case MOVE_EFFECT_BURN:
+    case MOVE_EFFECT_FREEZE:
+    case MOVE_EFFECT_PARALYSIS:
+    case MOVE_EFFECT_TOXIC:
+    if (ismovetypestatusimmune(gCurrentMove, gBattlerTarget))
     {
         gBattlescriptCurrInstr++;
         return;
@@ -6949,7 +6949,14 @@ static u8 ChangeStatBuffs(s8 statValue, u8 statId, u8 flags, const u8 *BS_ptr)
         gBattleMons[gActiveBattler].statStages[statId] = MIN_STAT_STAGE;
     if (gBattleMons[gActiveBattler].statStages[statId] > MAX_STAT_STAGE)
         gBattleMons[gActiveBattler].statStages[statId] = MAX_STAT_STAGE;
-
+    // ADD: mirror SpAtk and SpDef stages — merged Special stat
+    if (statId == STAT_SPATK)
+        gBattleMons[gActiveBattler].statStages[STAT_SPDEF] =
+            gBattleMons[gActiveBattler].statStages[STAT_SPATK];
+    if (statId == STAT_SPDEF)
+        gBattleMons[gActiveBattler].statStages[STAT_SPATK] =
+            gBattleMons[gActiveBattler].statStages[STAT_SPDEF];
+    // END ADD
     if (gBattleCommunication[MULTISTRING_CHOOSER] == B_MSG_STAT_WONT_INCREASE && flags & STAT_CHANGE_ALLOW_PTR)
         gMoveResultFlags |= MOVE_RESULT_MISSED;
 
@@ -6964,6 +6971,12 @@ static void Cmd_statbuffchange(void)
     const u8 *jumpPtr = T1_READ_PTR(gBattlescriptCurrInstr + 2);
     if (ChangeStatBuffs(gBattleScripting.statChanger & 0xF0, GET_STAT_BUFF_ID(gBattleScripting.statChanger), gBattlescriptCurrInstr[1], jumpPtr) == STAT_CHANGE_WORKED)
         gBattlescriptCurrInstr += 6;
+    if (statId == STAT_SPATK)
+        gBattleMons[gBattlerTarget].statStages[STAT_SPDEF] =
+        gBattleMons[gBattlerTarget].statStages[STAT_SPATK];
+    if (statId == STAT_SPDEF)
+        gBattleMons[gBattlerTarget].statStages[STAT_SPATK] =
+        gBattleMons[gBattlerTarget].statStages[STAT_SPDEF];
 }
 
 // Haze
