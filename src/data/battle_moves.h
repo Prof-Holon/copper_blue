@@ -158,15 +158,15 @@ const struct BattleMove gBattleMoves[MOVES_COUNT] =
 
     [MOVE_GUILLOTINE] =
     {
-        .effect = EFFECT_RECHARGE,
-        .power = 150,
+        .effect = EFFECT_OHKO,
+        .power = 1,
         .type = TYPE_NORMAL,
-        .accuracy = 150,
+        .accuracy = 30,
         .pp = 5,
         .secondaryEffectChance = 0,
         .target = MOVE_TARGET_SELECTED,
         .priority = 0,
-        .flags = FLAG_MAKES_CONTACT | FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED,
+        .flags = FLAG_MAKES_CONTACT | FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED,
     },
 
     [MOVE_RAZOR_WIND] =
@@ -418,15 +418,15 @@ const struct BattleMove gBattleMoves[MOVES_COUNT] =
 
     [MOVE_HORN_DRILL] =
     {
-        .effect = EFFECT_RECHARGE,
-        .power = 150,
-        .type = TYPE_ROCK,
-        .accuracy = 90,
+        .effect = EFFECT_OHKO,
+        .power = 1,
+        .type = TYPE_NORMAL,
+        .accuracy = 30,
         .pp = 5,
         .secondaryEffectChance = 0,
         .target = MOVE_TARGET_SELECTED,
         .priority = 0,
-        .flags = FLAG_MAKES_CONTACT | FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED,
+        .flags = FLAG_MAKES_CONTACT | FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED,
     },
 
     [MOVE_TACKLE] =
@@ -1172,15 +1172,15 @@ const struct BattleMove gBattleMoves[MOVES_COUNT] =
 
     [MOVE_FISSURE] =
     {
-        .effect = EFFECT_RECHARGE,
-        .power = 150,
+        .effect = EFFECT_OHKO,
+        .power = 1,
         .type = TYPE_GROUND,
-        .accuracy = 90,
+        .accuracy = 30,
         .pp = 5,
         .secondaryEffectChance = 0,
         .target = MOVE_TARGET_SELECTED,
         .priority = 0,
-        .flags = FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED | FLAG_KINGS_ROCK_AFFECTED,
+        .flags = FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED,
     },
 
     [MOVE_DIG] =
@@ -4279,15 +4279,15 @@ const struct BattleMove gBattleMoves[MOVES_COUNT] =
 
     [MOVE_SHEER_COLD] =
     {
-        .effect = EFFECT_RECHARGE,
-        .power = 150,
+        .effect = EFFECT_OHKO,
+        .power = 1,
         .type = TYPE_ICE,
-        .accuracy = 90,
+        .accuracy = 30,
         .pp = 5,
         .secondaryEffectChance = 0,
         .target = MOVE_TARGET_SELECTED,
         .priority = 0,
-        .flags = FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED| FLAG_KINGS_ROCK_AFFECTED,
+        .flags = FLAG_PROTECT_AFFECTED | FLAG_MIRROR_MOVE_AFFECTED,
     },
 
     [MOVE_MUDDY_WATER] =
