@@ -1,6 +1,8 @@
 #ifndef GUARD_CONSTANTS_POKEMON_H
 #define GUARD_CONSTANTS_POKEMON_H
 
+extern u8 gEvolutionMethodUsed;
+
 // For (Set|Get)(Box)?MonData
 #define MON_DATA_PERSONALITY               0
 #define MON_DATA_OT_ID                     1
