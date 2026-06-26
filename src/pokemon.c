@@ -5123,6 +5123,23 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 type, u16 evolutionItem)
                             targetSpecies = gEvolutionTable[species][i].targetSpecies;
                     }
                 break;
+            case EVO_PARTY: // ADD for specific party checks
+                {
+                    u8 j;
+                    bool8 hasRequiredSpecies = FALSE;
+                    for (j = 0; j < gPlayerPartyCount; j++)
+                    {
+                        if (GetMonData(&gPlayerParty[j], MON_DATA_SPECIES, NULL) == gEvolutionTable[species][i].param)
+                        {
+                            hasRequiredSpecies = TRUE;
+                            break;
+                        }
+                    }
+                    if (hasRequiredSpecies)
+                    // && if (level >= gEvolutionTable[species][i].param) optional level gate, can be removed
+                        targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                }
+                break;
             }
         }
         break;
@@ -5140,12 +5157,12 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 type, u16 evolutionItem)
                     targetSpecies = gEvolutionTable[species][i].targetSpecies;
                     
                     // Prevent cross-generational evolutions like Scizor and Steelix until the National Pokedex is obtained
-                    if (IsNationalPokedexEnabled() || targetSpecies <= KANTO_SPECIES_END)
-                    {
-                        heldItem = ITEM_NONE;
-                        SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
-                        targetSpecies = gEvolutionTable[species][i].targetSpecies;
-                    }
+                    //if (IsNationalPokedexEnabled() || targetSpecies <= KANTO_SPECIES_END)
+                    //{
+                        //heldItem = ITEM_NONE;
+                        //SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
+                        //targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    //}
                 }
                 break;
             }

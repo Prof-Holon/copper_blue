@@ -279,6 +279,7 @@
 #define EVO_LEVEL_SHEDINJA   14 // Pokémon reaches the specified level (special value for Shedinja)
 #define EVO_BEAUTY           15 // Pokémon levels up with beauty ≥ specified value
 #define EVO_TRIO			 16 // ADD: Pokemon levels up with two others in party
+#define EVO_PARTY            17 // ADD: evolve when you level and a certain Pokemon is in the party
 
 #define EVOS_PER_MON 5
 
