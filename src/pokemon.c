@@ -79,6 +79,8 @@ static u16 GiveMoveToBoxMon(struct BoxPokemon *boxMon, u16 move);
 static u8 GetLevelFromMonExp(struct Pokemon *mon);
 static u16 CalculateBoxMonChecksum(struct BoxPokemon *boxMon);
 
+u8 gEvolutionMethodUsed;
+
 #include "data/battle_moves.h"
 
 // Used in an unreferenced function in RS.
@@ -4523,6 +4525,24 @@ bool8 PokemonUseItemEffects(struct Pokemon *mon, u16 item, u8 partyIndex, u8 mov
 
                             if (targetSpecies != SPECIES_NONE)
                             {
+                                // ADD: if this was a trio evolution, remove the two other same-species party members
+                                if (gEvolutionMethodUsed == EVO_TRIO)
+                                {
+                                    u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
+                                    u8 removed = 0, j;
+                                    for (j = 0; j < gPlayerPartyCount && removed < 2; j++)
+                                    {
+                                        if (j != partyIndex && GetMonData(&gPlayerParty[j], MON_DATA_SPECIES, NULL) == species)
+                                        {
+                                            u16 none = SPECIES_NONE;
+                                            SetMonData(&gPlayerParty[j], MON_DATA_SPECIES, &none);
+                                            removed++;
+                                        }
+                                    }
+                                    CompactPartySlots();
+                                    gPlayerPartyCount -= removed;
+                                }
+                                // END ADD
                                 BeginEvolutionScene(mon, targetSpecies, FALSE, partyIndex);
                                 return FALSE;
                             }
@@ -5225,20 +5245,23 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 type, u16 evolutionItem)
                 if (gEvolutionTable[species][i].param <= beauty)
                     targetSpecies = gEvolutionTable[species][i].targetSpecies;
                 break;
-            case EVO_TRIO: // ADD for Magnemite and Diglett
-                if (gEvolutionTable[species][i].param <= level)
+            
+            case EVO_PARTY: // ADD for specific party checks
+                {
+                    u8 j;
+                    bool8 hasRequiredSpecies = FALSE;
+                    for (j = 0; j < gPlayerPartyCount; j++)
                     {
-                        u8 j;
-                        u8 sameSpeciesCount = 0;
-                        for (j = 0; j < gPlayerPartyCount; j++)
+                        if (GetMonData(&gPlayerParty[j], MON_DATA_SPECIES, NULL) == gEvolutionTable[species][i].param)
                         {
-                            if (GetMonData(&gPlayerParty[j], MON_DATA_SPECIES, NULL) == species
-                             && GetMonData(&gPlayerParty[j], MON_DATA_LEVEL, NULL) > 0)
-                                sameSpeciesCount++;
+                            hasRequiredSpecies = TRUE;
+                            break;
                         }
-                        if (sameSpeciesCount >= 3)
-                            targetSpecies = gEvolutionTable[species][i].targetSpecies;
                     }
+                    if (hasRequiredSpecies)
+                    // && if (level >= gEvolutionTable[species][i].param) optional level gate, can be removed
+                        targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                }
                 break;
             }
         }
@@ -5257,12 +5280,12 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 type, u16 evolutionItem)
                     targetSpecies = gEvolutionTable[species][i].targetSpecies;
                     
                     // Prevent cross-generational evolutions like Scizor and Steelix until the National Pokedex is obtained
-                    if (IsNationalPokedexEnabled() || targetSpecies <= KANTO_SPECIES_END)
-                    {
-                        heldItem = ITEM_NONE;
-                        SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
-                        targetSpecies = gEvolutionTable[species][i].targetSpecies;
-                    }
+                    //if (IsNationalPokedexEnabled() || targetSpecies <= KANTO_SPECIES_END)
+                    //{
+                        //heldItem = ITEM_NONE;
+                        //SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
+                        //targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    //}
                 }
                 break;
             }
@@ -5276,10 +5299,28 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 type, u16 evolutionItem)
              && gEvolutionTable[species][i].param == evolutionItem)
             {
                 targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                gEvolutionMethodUsed = EVO_ITEM;
                 break;
             }
+            if (gEvolutionTable[species][i].method == EVO_TRIO
+             && gEvolutionTable[species][i].param == evolutionItem)
+            {
+                u8 j;
+                u8 sameSpeciesCount = 0;
+                for (j = 0; j < gPlayerPartyCount; j++)
+                {
+                    if (GetMonData(&gPlayerParty[j], MON_DATA_SPECIES, NULL) == species)
+                        sameSpeciesCount++;
+                }
+                if (sameSpeciesCount > 3)
+                {
+                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    gEvolutionMethodUsed = EVO_TRIO;
+                }
+            break;
         }
-        break;
+    }
+    break;
     }
 
     return targetSpecies;

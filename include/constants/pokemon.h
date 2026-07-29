@@ -1,6 +1,8 @@
 #ifndef GUARD_CONSTANTS_POKEMON_H
 #define GUARD_CONSTANTS_POKEMON_H
 
+extern u8 gEvolutionMethodUsed;
+
 // For (Set|Get)(Box)?MonData
 #define MON_DATA_PERSONALITY               0
 #define MON_DATA_OT_ID                     1
@@ -279,6 +281,7 @@
 #define EVO_LEVEL_SHEDINJA   14 // Pokémon reaches the specified level (special value for Shedinja)
 #define EVO_BEAUTY           15 // Pokémon levels up with beauty ≥ specified value
 #define EVO_TRIO			 16 // ADD: Pokemon levels up with two others in party
+#define EVO_PARTY            17 // ADD: evolve when you level and a certain Pokemon is in the party
 
 #define EVOS_PER_MON 5
 
