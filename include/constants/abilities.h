@@ -80,7 +80,7 @@
 #define ABILITY_CACOPHONY 76
 #define ABILITY_AIR_LOCK 77
 
-#define ability_snow_warning 78
+#define ABILITY_SNOW_WARNING 78
 
 #define ABILITIES_COUNT 79
 

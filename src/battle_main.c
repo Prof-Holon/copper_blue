@@ -3195,8 +3195,9 @@ static void HandleTurnActionSelectionState(void)
                     break;
                 case B_ACTION_SWITCH:
                     *(gBattleStruct->battlerPartyIndexes + gActiveBattler) = gBattlerPartyIndexes[gActiveBattler];
-                    if (gBattleMons[gActiveBattler].status2 & (STATUS2_WRAPPED | STATUS2_ESCAPE_PREVENTION) || gStatuses3[gActiveBattler] & STATUS3_ROOTED 
-                    && gBattleMons[gActiveBattler].ability != ABILITY_RUN_AWAY)) //added
+                    if (((gBattleMons[gActiveBattler].status2 & (STATUS2_WRAPPED | STATUS2_ESCAPE_PREVENTION))
+                        || (gStatuses3[gActiveBattler] & STATUS3_ROOTED))
+                        && gBattleMons[gActiveBattler].ability != ABILITY_RUN_AWAY) //added
                     {
                         BtlController_EmitChoosePokemon(BUFFER_A, PARTY_ACTION_CANT_SWITCH, 6, ABILITY_NONE, gBattleStruct->battlerPartyOrders[gActiveBattler]);
                     }
@@ -3411,7 +3412,8 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
     if (WEATHER_HAS_EFFECT)
     {
         if ((gBattleMons[battler1].ability == ABILITY_SWIFT_SWIM && gBattleWeather & B_WEATHER_RAIN)
-            || (gBattleMons[battler1].ability == ABILITY_CHLOROPHYLL && gBattleWeather & B_WEATHER_SUN))
+            || (gBattleMons[battler1].ability == ABILITY_CHLOROPHYLL && gBattleWeather & B_WEATHER_SUN)
+            || (gBattleMons[battler1].ability == ABILITY_AIR_LOCK && gBattleWeather))
             speedMultiplierBattler1 = 2;
         else
             speedMultiplierBattler1 = 1;
@@ -3421,26 +3423,21 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
         else
             speedMultiplierBattler2 = 1;
     }
-    else if (gBattleWeather != B_WEATHER_NONE)  // weather exists but is being suppressed
-    {
-        // ADD: Air Lock doubles speed when actively negating weather
-        speedMultiplierBattler1 = (gBattleMons[battler1].ability == ABILITY_AIR_LOCK) ? 2 : 1;
-        speedMultiplierBattler2 = (gBattleMons[battler2].ability == ABILITY_AIR_LOCK) ? 2 : 1;
-    }
+    
     // add vital spirit speed boost for both battlers
-    if ((gBattleMons[battler1].ability == ABILITY_VITAL_SPIRIT && battler1->status1)
+    if (gBattleMons[battler1].ability == ABILITY_VITAL_SPIRIT && battler1->status1)
         speedMultiplierBattler1 = 2;
-    if ((gBattleMons[battler2].ability == ABILITY_VITAL_SPIRIT && battler2->status1)
+    if (gBattleMons[battler2].ability == ABILITY_VITAL_SPIRIT && battler2->status1)
         speedMultiplierBattler2 = 2;
 
     // add speed doubling if Minus/Plus ally
-    if ((gBattleMons[battler1].ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
+    if (gBattleMons[battler1].ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
         speedMultiplierBattler1 = 2;
-    if ((gBattleMons[battler2].ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
+    if (gBattleMons[battler2].ability == ABILITY_PLUS && ABILITY_ON_FIELD2(ABILITY_MINUS))
         speedMultiplierBattler2 = 2;
-    if ((gBattleMons[battler1].ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
+    if (gBattleMons[battler1].ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
         speedMultiplierBattler1 = 2;
-    if ((gBattleMons[battler2].ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
+    if (gBattleMons[battler2].ability == ABILITY_MINUS && ABILITY_ON_FIELD2(ABILITY_PLUS))
         speedMultiplierBattler2 = 2;
 
     else
@@ -4348,7 +4345,7 @@ static void HandleAction_Run(void)
         else
         {
             if (gBattleMons[gBattlerAttacker].status2 & (STATUS2_WRAPPED | STATUS2_ESCAPE_PREVENTION)
-            && gBattleMons[gBattlerAttacker].ability != ABILITY_RUN_AWAY)) //added
+            && gBattleMons[gBattlerAttacker].ability != ABILITY_RUN_AWAY) //added
             {
                 gBattleCommunication[MULTISTRING_CHOOSER] = 4;
                 gBattlescriptCurrInstr = BattleScript_PrintFailedToRunString;
