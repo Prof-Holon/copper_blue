@@ -8811,9 +8811,10 @@
                 "species": "SPECIES_GOLDEEN"
               },
               {
-                "min_level": 15,
-                "max_level": 25,
-                "species": "SPECIES_SHELLDER"
+                 "min_level": 15,
+                 "max_level": 25,
+                 "species": "SPECIES_SHELLDER"
+              },
               {
                 "min_level": 20,
                 "max_level": 30,
